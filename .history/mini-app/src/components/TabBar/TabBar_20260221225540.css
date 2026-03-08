@@ -1,0 +1,120 @@
+/* Переменные под светлую тему (как на макете) */
+:root {
+  --tabbar-bg: rgba(229, 229, 229, 0.6);
+  --tabbar-border: rgba(0, 0, 0, 0.06);
+  --tabbar-text: #1c1c1e;
+  --tabbar-active: #007AFF;
+  --tabbar-pill-bg: rgba(255, 255, 255, 0.9);
+  --tabbar-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.tabbar-wrapper {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  padding: 0 16px;
+  padding-bottom: env(safe-area-inset-bottom);
+  pointer-events: none;
+}
+
+.tabbar-pill {
+  pointer-events: auto;
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+  height: 62px;
+  background: var(--tabbar-bg);
+  border: 1px solid var(--tabbar-border);
+  border-radius: 31px;
+  box-shadow: var(--tabbar-shadow);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.tabbar-pill .active-indicator {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: calc((100% - 8px) / 4);
+  background: var(--tabbar-pill-bg);
+  box-shadow: var(--tabbar-shadow);
+  border-radius: 27px;
+  z-index: 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.tab-item {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  border-radius: 27px;
+  transition: color 0.2s ease;
+  color: var(--tabbar-text);
+  position: relative;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+}
+
+.tab-item.active {
+  color: var(--tabbar-active);
+}
+
+.tab-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.tab-label {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* Круглая кнопка справа (сетка) */
+.tabbar-grid-btn {
+  pointer-events: auto;
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  min-height: 54px;
+  border-radius: 50%;
+  background: var(--tabbar-bg);
+  border: 1px solid var(--tabbar-border);
+  box-shadow: var(--tabbar-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--tabbar-text);
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.2s ease;
+}
+
+.tabbar-grid-btn:hover {
+  opacity: 0.9;
+}
+
+.tabbar-grid-btn .tab-icon {
+  width: 24px;
+  height: 24px;
+}

@@ -1,0 +1,71 @@
+.voting-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #08080F;
+  overflow: hidden;
+}
+
+.voting-screen > .app-footer {
+  position: absolute;
+  bottom: 0;
+}
+
+.voting-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px;
+  animation: votingFadeIn 0.6s ease;
+}
+
+.voting-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.voting-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.25;
+}
+
+.voting-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.voting-subtitle {
+  font-size: 15px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.28);
+  margin: 0;
+  text-align: center;
+  max-width: 240px;
+  line-height: 1.5;
+}
+
+@keyframes votingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
