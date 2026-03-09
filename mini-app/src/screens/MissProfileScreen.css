@@ -54,7 +54,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(14px + var(--safe-top)) 16px 12px;
+  padding: calc(
+      10px
+      + var(--tg-safe-area-inset-top, 0px)
+      + var(--tg-content-safe-area-inset-top, 0px)
+    ) 16px 12px;
   pointer-events: none;
 }
 
@@ -142,7 +146,11 @@
   position: relative;
   z-index: 2;
   margin-top: -42px;
-  padding-bottom: calc(32px + var(--safe-bottom));
+  padding-bottom: calc(
+    32px
+    + var(--tg-safe-area-inset-bottom, 0px)
+    + var(--tg-content-safe-area-inset-bottom, 0px)
+  );
 }
 
 .profile-sheet__inner {
