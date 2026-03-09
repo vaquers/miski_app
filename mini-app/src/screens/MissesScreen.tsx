@@ -224,7 +224,7 @@ export const MissesScreen: React.FC = () => {
                   <div className="miss-info">
                     <h2 className="miss-info__name">{miss.firstName}{miss.lastName ? ` ${miss.lastName}` : ''}</h2>
                     <span className="miss-info__cta">
-                      Открыть профиль
+                      Открыть интервью
                     </span>
                   </div>
                 </div>
