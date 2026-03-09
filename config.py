@@ -6,7 +6,8 @@ load_dotenv()
 TG_TOKEN = os.getenv("TG_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "5584466914"))
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://turritopsis-dohrnii.duckdns.org")
-API_PORT = int(os.getenv("API_PORT", "8080"))
+# На Railway приложение получает порт из переменной окружения PORT.
+API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", "8080")))
 
 MISSES = [
     {"id": "alina", "name": "Алина Василевская"},

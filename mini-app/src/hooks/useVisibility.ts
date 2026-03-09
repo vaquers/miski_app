@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 
-const DEFAULT_API_URL = 'https://miski-app.onrender.com';
-
 function getApiBaseUrl(): string {
   if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
 
-  // В проде по умолчанию ходим на Render, даже если env не настроены.
-  if (import.meta.env.PROD) return DEFAULT_API_URL;
+  // В проде по умолчанию ходим на Railway, даже если env не настроены.
+  if (import.meta.env.PROD) return 'https://miskiapp-production.up.railway.app';
 
   // В dev без env используем относительный путь и Vite proxy.
   return '';
