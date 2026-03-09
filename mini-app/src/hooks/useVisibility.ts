@@ -20,11 +20,16 @@ export function useVisibility(): Record<string, boolean> | null {
 
     fetch(url)
       .then((r) => r.json())
-      .then(setVisibility)
+      .then((data) => {
+        // Если API вернул некорректный ответ, не трогаем текущее состояние.
+        if (data && typeof data === 'object') {
+          setVisibility(data as Record<string, boolean>);
+        }
+      })
       .catch((error) => {
-        // Fallback: считаем, что все доступны, если API недоступен.
+        // Если запрос упал, просто логируем ошибку и оставляем
+        // последнее корректное состояние visibility без изменений.
         console.error('Failed to load visibility data', error);
-        setVisibility(null);
       });
   }, []);
 
