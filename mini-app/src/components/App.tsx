@@ -17,11 +17,11 @@ function AppContent() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const startParam = lp.startParam;
+    const startParam = lp.tgWebAppStartParam;
     if (!startParam) return;
 
     navigate(`/miss/${startParam}`, { replace: true });
-  }, [lp.startParam, navigate]);
+  }, [lp.tgWebAppStartParam, navigate]);
 
   return (
     <>
