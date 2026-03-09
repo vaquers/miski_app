@@ -50,14 +50,14 @@
 
 .profile-nav {
   position: fixed;
-  top: 0;
+  top: calc(var(--safe-top, 0px) + 24px);
   left: 0;
   right: 0;
   z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(10px + var(--safe-top, 0px)) 16px 12px;
+  padding: 0 16px 12px;
   pointer-events: none;
 }
 
