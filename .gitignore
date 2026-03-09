@@ -17,5 +17,5 @@ __pycache__/
 node_modules/
 
 # build
-dist/
 build/
+dist/
