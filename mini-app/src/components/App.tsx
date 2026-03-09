@@ -1,4 +1,11 @@
-import { Navigate, Route, Routes, HashRouter } from 'react-router-dom';
+import { useEffect } from 'react';
+import {
+  Navigate,
+  Route,
+  Routes,
+  HashRouter,
+  useNavigate,
+} from 'react-router-dom';
 import { useLaunchParams, useSignal, miniApp } from '@tma.js/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
 
@@ -6,6 +13,16 @@ import { TabBar } from '@/components/TabBar';
 import { routes } from '@/navigation/routes';
 
 function AppContent() {
+  const lp = useLaunchParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const startParam = lp.startParam;
+    if (!startParam) return;
+
+    navigate(`/miss/${startParam}`, { replace: true });
+  }, [lp.startParam, navigate]);
+
   return (
     <>
       <Routes>
