@@ -33,6 +33,15 @@ export const Lightbox: React.FC<LightboxProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose, handlePrev, handleNext]);
 
+  useEffect(() => {
+    [currentIndex - 1, currentIndex + 1].forEach((i) => {
+      if (i >= 0 && i < images.length && images[i]) {
+        const img = new Image();
+        img.src = images[i];
+      }
+    });
+  }, [currentIndex, images]);
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchRef.current = {
       x: e.touches[0].clientX,
@@ -79,6 +88,7 @@ export const Lightbox: React.FC<LightboxProps> = ({
           alt=""
           className="lightbox__img"
           draggable={false}
+          decoding="async"
         />
       </div>
       {images.length > 1 && (

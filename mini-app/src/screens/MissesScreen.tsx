@@ -118,6 +118,9 @@ export const MissesScreen: React.FC = () => {
     [],
   );
 
+  const visibleFrom = Math.max(0, activeIndex - 1);
+  const visibleTo = Math.min(displayMisses.length - 1, activeIndex + 1);
+
   const handleMissTap = useCallback(
     (miss: DisplayMiss) => {
       if (miss.available) {
@@ -176,12 +179,20 @@ export const MissesScreen: React.FC = () => {
               <div className={`miss-glow miss-glow--${miss.planetPosition}`} />
 
               <div className={`miss-planet miss-planet--${miss.planetPosition}`}>
-                <img
-                  src={miss.planetImage}
-                  alt=""
-                  className="miss-planet__img"
-                  draggable={false}
-                />
+                {index >= visibleFrom && index <= visibleTo ? (
+                  <img
+                    src={miss.planetImage}
+                    alt=""
+                    className="miss-planet__img"
+                    draggable={false}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    width={140}
+                    height={140}
+                  />
+                ) : (
+                  <div className="miss-planet__placeholder" aria-hidden />
+                )}
               </div>
 
               {isLocked ? (
@@ -193,12 +204,21 @@ export const MissesScreen: React.FC = () => {
               ) : (
                 <div className="miss-content">
                   <div className="miss-photo">
-                    <img
-                      src={miss.previewImage}
-                      alt={miss.firstName}
-                      className="miss-photo__img"
-                      draggable={false}
-                    />
+                    {index >= visibleFrom && index <= visibleTo ? (
+                      <img
+                        src={miss.previewImage}
+                        alt={miss.firstName}
+                        className="miss-photo__img"
+                        draggable={false}
+                        loading={index === activeIndex ? 'eager' : 'lazy'}
+                        decoding="async"
+                        fetchPriority={index === activeIndex ? 'high' : undefined}
+                        width={240}
+                        height={320}
+                      />
+                    ) : (
+                      <div className="miss-photo__placeholder" aria-hidden />
+                    )}
                   </div>
 
                   <div className="miss-info">

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { misses } from '@/data/misses';
 import { Lightbox } from '@/components/Lightbox/Lightbox';
 import { Footer } from '@/components/Footer/Footer';
+import { LazyImage } from '@/components/LazyImage/LazyImage';
 import './MissProfileScreen.css';
 
 export const MissProfileScreen: React.FC = () => {
@@ -40,7 +41,15 @@ export const MissProfileScreen: React.FC = () => {
       <div className="profile-screen">
         {/* Layer 1: Fullscreen blurred background */}
         <div className="profile-bg">
-          <img src={heroSrc} alt="" className="profile-bg__img" draggable={false} />
+          <img
+            src={heroSrc}
+            alt=""
+            className="profile-bg__img"
+            draggable={false}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+          />
           <div className="profile-bg__overlay" />
         </div>
 
@@ -64,6 +73,9 @@ export const MissProfileScreen: React.FC = () => {
             alt={fullName}
             className="profile-hero__img"
             draggable={false}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
           />
           <div className="profile-hero__gradient" />
           <div className="profile-hero__identity">
@@ -136,12 +148,16 @@ export const MissProfileScreen: React.FC = () => {
                       className="profile-gallery__item"
                       onClick={() => handleGalleryClick(i)}
                     >
-                      <img
+                      <LazyImage
                         src={photo}
                         alt={`${miss.firstName} ${i + 1}`}
                         className="profile-gallery__img"
                         draggable={false}
                         loading="lazy"
+                        decoding="async"
+                        useIntersection={true}
+                        width={300}
+                        height={400}
                       />
                     </button>
                   ))}
