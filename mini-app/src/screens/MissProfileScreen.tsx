@@ -57,7 +57,7 @@ export const MissProfileScreen: React.FC = () => {
         <div className="profile-nav">
           <button
             className="profile-nav__btn"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/')}
             aria-label="Закрыть"
           >
             <svg width="16" height="13" viewBox="0 0 599 484.25" fill="none">
