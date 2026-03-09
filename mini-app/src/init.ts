@@ -3,8 +3,6 @@ import {
   themeParams,
   initData,
   viewport,
-  safeArea,
-  contentSafeArea,
   init as initSDK,
   mockTelegramEnv,
   retrieveLaunchParams,
@@ -71,18 +69,6 @@ export async function init(options: {
   if (viewport.mount.isAvailable()) {
     viewport.mount().then(() => {
       viewport.bindCssVars();
-    });
-  }
-
-  if (safeArea.mount.isAvailable()) {
-    safeArea.mount().then(() => {
-      safeArea.bindCssVars();
-    });
-  }
-
-  if (contentSafeArea.mount.isAvailable()) {
-    contentSafeArea.mount().then(() => {
-      contentSafeArea.bindCssVars();
     });
   }
 }
