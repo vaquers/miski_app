@@ -5,6 +5,7 @@ import {
   Routes,
   HashRouter,
   useNavigate,
+  useLocation,
 } from 'react-router-dom';
 import { useLaunchParams, useSignal, miniApp } from '@tma.js/sdk-react';
 import { AppRoot } from '@telegram-apps/telegram-ui';
@@ -15,13 +16,20 @@ import { routes } from '@/navigation/routes';
 function AppContent() {
   const lp = useLaunchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const startParam = lp.tgWebAppStartParam;
     if (!startParam) return;
 
+    // Если мы уже не на главном экране, не перезаписываем навигацию.
+    if (location.pathname !== '/') return;
+
+    const currentParams = new URLSearchParams(location.search);
+    if (currentParams.get('miss') === startParam) return;
+
     navigate(`/?miss=${encodeURIComponent(startParam)}`, { replace: true });
-  }, [lp.tgWebAppStartParam, navigate]);
+  }, [lp.tgWebAppStartParam, navigate, location]);
 
   return (
     <>
