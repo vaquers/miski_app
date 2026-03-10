@@ -20,7 +20,7 @@ function AppContent() {
     const startParam = lp.tgWebAppStartParam;
     if (!startParam) return;
 
-    navigate(`/miss/${startParam}`, { replace: true });
+    navigate(`/?miss=${encodeURIComponent(startParam)}`, { replace: true });
   }, [lp.tgWebAppStartParam, navigate]);
 
   return (
