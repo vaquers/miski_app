@@ -13,6 +13,8 @@ import type { DisplayMiss } from '@/types/miss';
 import Galaxy from '@/components/Galaxy/Galaxy';
 import { Footer } from '@/components/Footer/Footer';
 import { useVisibility } from '@/hooks/useVisibility';
+import misskaWho from '../../assets/miski_main/misska_who.png';
+import planetWhat from '../../assets/miski_main/planet_what.png';
 import './MissesScreen.css';
 
 export const MissesScreen: React.FC = () => {
@@ -28,27 +30,26 @@ export const MissesScreen: React.FC = () => {
     [],
   );
 
-  const published = useMemo(() => {
-    const available = getAvailableMisses(misses);
-    if (visibility) {
-      return available.filter((m) => visibility[m.id] !== false);
-    }
-    return available;
-  }, [visibility]);
+  const availableIds = useMemo(
+    () => new Set(getAvailableMisses(misses).map((m) => m.id)),
+    [],
+  );
 
-  const displayMisses: DisplayMiss[] = useMemo(() => {
-    const items: DisplayMiss[] = published.map((m) => ({ ...m, available: true }));
-    const nextLocked = allOrdered.find(
-      (m) => !published.some((p) => p.id === m.id),
-    );
-    if (nextLocked) {
-      items.push({ ...nextLocked, available: false });
-    }
-    if (items.length === 0 && allOrdered.length > 0) {
-      items.push({ ...allOrdered[0], available: false });
-    }
-    return items;
-  }, [published, allOrdered]);
+  const displayMisses: DisplayMiss[] = useMemo(
+    () =>
+      allOrdered.map((m) => {
+        const isVisibleByApi = !visibility || visibility[m.id] !== false;
+        const isAvailableByDate = availableIds.has(m.id);
+
+        return {
+          ...m,
+          // Открытая миска: и доступна по дате, и не скрыта API.
+          // Закрытая миска остаётся в списке, но available=false.
+          available: isVisibleByApi && isAvailableByDate,
+        };
+      }),
+    [allOrdered, visibility, availableIds],
+  );
 
   const updateSections = useCallback(() => {
     const container = scrollRef.current;
@@ -168,6 +169,29 @@ export const MissesScreen: React.FC = () => {
             '--section-accent': miss.theme.accent,
           } as CSSProperties;
 
+          const maskMap: Record<string, { first: number; last: number }> = {
+            // Порядок масок соответствует массиву мисок:
+            // nastya, ksyusha, emiliya, angelina, adelya, polina, sonya
+            nastya: { first: 10, last: 7 },
+            ksyusha: { first: 10, last: 4 },
+            emiliya: { first: 9, last: 4 },
+            angelina: { first: 7, last: 6 },
+            adelya: { first: 9, last: 7 },
+            polina: { first: 8, last: 6 },
+            sonya: { first: 8, last: 5 },
+          };
+
+          const maskConfig = maskMap[miss.id];
+          const maskedFirstName =
+            isLocked && maskConfig ? '?'.repeat(maskConfig.first) : miss.firstName;
+          const maskedLastName =
+            isLocked && maskConfig && miss.lastName
+              ? '?'.repeat(maskConfig.last)
+              : miss.lastName;
+
+          const planetSrc = isLocked ? planetWhat : miss.planetImage;
+          const photoSrc = isLocked ? misskaWho : miss.previewImage;
+
           return (
             <section
               key={miss.id}
@@ -181,7 +205,7 @@ export const MissesScreen: React.FC = () => {
               <div className={`miss-planet miss-planet--${miss.planetPosition}`}>
                 {index >= visibleFrom && index <= visibleTo ? (
                   <img
-                    src={miss.planetImage}
+                    src={planetSrc}
                     alt=""
                     className="miss-planet__img"
                     draggable={false}
@@ -195,18 +219,11 @@ export const MissesScreen: React.FC = () => {
                 )}
               </div>
 
-              {isLocked ? (
-                <div className="miss-locked-content">
-                  <div className="miss-locked__icon">✧ ✧ ✧</div>
-                  <p className="miss-locked__title">Скоро откроется</p>
-                  <p className="miss-locked__subtitle">новая участница</p>
-                </div>
-              ) : (
-                <div className="miss-content">
+              <div className="miss-content">
                   <div className="miss-photo">
                     {index >= visibleFrom && index <= visibleTo ? (
                       <img
-                        src={miss.previewImage}
+                        src={photoSrc}
                         alt={miss.firstName}
                         className="miss-photo__img"
                         draggable={false}
@@ -222,13 +239,17 @@ export const MissesScreen: React.FC = () => {
                   </div>
 
                   <div className="miss-info">
-                    <h2 className="miss-info__name">{miss.firstName}{miss.lastName ? ` ${miss.lastName}` : ''}</h2>
-                    <span className="miss-info__cta">
-                      Открыть интервью
-                    </span>
+                    <h2 className="miss-info__name">
+                      {maskedFirstName}
+                      {maskedLastName ? ` ${maskedLastName}` : ''}
+                    </h2>
+                    {!isLocked && (
+                      <span className="miss-info__cta">
+                        Открыть интервью
+                      </span>
+                    )}
                   </div>
                 </div>
-              )}
             </section>
           );
         })}
