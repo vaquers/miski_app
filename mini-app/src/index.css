@@ -17,7 +17,7 @@
 
   /* Унифицированные переменные, которые используют экраны */
   --safe-top: calc(
-    50px +
+    10px +
     var(--tg-content-safe-area-inset-top, 0px) +
     var(--tg-safe-area-inset-top, 0px)
   );
