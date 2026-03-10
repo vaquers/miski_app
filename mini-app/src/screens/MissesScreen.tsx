@@ -8,11 +8,11 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { misses } from '@/data/misses';
-// import { getAvailableMisses } from '@/utils/date';
+import { getAvailableMisses } from '@/utils/date';
 import type { DisplayMiss } from '@/types/miss';
 import Galaxy from '@/components/Galaxy/Galaxy';
 import { Footer } from '@/components/Footer/Footer';
-// import { useVisibility } from '@/hooks/useVisibility';
+import { useVisibility } from '@/hooks/useVisibility';
 import misskaWho from '../../assets/miski_main/misska_who.png';
 import planetWhat from '../../assets/miski_main/planet_what.png';
 import './MissesScreen.css';
@@ -23,45 +23,33 @@ export const MissesScreen: React.FC = () => {
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
   const rafRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
-  // const visibility = useVisibility();
+  const visibility = useVisibility();
 
   const allOrdered = useMemo(
     () => [...misses].sort((a, b) => a.order - b.order),
     [],
   );
 
-  // const availableIds = useMemo(
-  //   () => new Set(getAvailableMisses(misses).map((m) => m.id)),
-  //   [],
-  // );
-  //
-  // const displayMisses: DisplayMiss[] = useMemo(
-  //   () =>
-  //     allOrdered.map((m) => {
-  //       const isVisibleByApi = !visibility || visibility[m.id] !== false;
-  //       const isAvailableByDate = availableIds.has(m.id);
-  //
-  //       return {
-  //         ...m,
-  //         // Открытая миска: и доступна по дате, и не скрыта API.
-  //         // Закрытая миска остаётся в списке, но available=false.
-  //         available: isVisibleByApi && isAvailableByDate,
-  //       };
-  //     }),
-  //   [allOrdered, visibility, availableIds],
-  // );
+  const availableIds = useMemo(
+    () => new Set(getAvailableMisses(misses).map((m) => m.id)),
+    [],
+  );
 
-  // ВРЕМЕННО: по требованию — в интерфейсе показываем только Алину.
-  // Остальные миски полностью скрыты из списка.
   const displayMisses: DisplayMiss[] = useMemo(
     () =>
-      allOrdered
-        .filter((m) => m.id === 'alina')
-        .map((m) => ({
+      allOrdered.map((m) => {
+        const isVisibleByApi = !visibility || visibility[m.id] !== false;
+        const isAvailableByDate = availableIds.has(m.id);
+        const isPublished = m.isPublished !== false;
+
+        return {
           ...m,
-          available: true,
-        })),
-    [allOrdered],
+          // Открытая миска: и доступна по дате, и не скрыта API, и включена в коде.
+          // Закрытая миска остаётся в списке, но available=false и маскируется.
+          available: isVisibleByApi && isAvailableByDate && isPublished,
+        };
+      }),
+    [allOrdered, visibility, availableIds],
   );
 
   const updateSections = useCallback(() => {

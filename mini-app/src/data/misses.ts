@@ -104,6 +104,38 @@ export const misses: Miss[] = [
     planetPosition: 'topRight',
     isPublished: true,
     gallery: getGallery('Настя'),
+    interview: [
+      {
+        question: 'Расскажи про планету, которая тебе досталась.',
+        answer:
+          'Моя планета - Земля. Это единственная планета, на которой есть жизнь. Мне очень нравится, что она контрастная: там есть и очень тихие места, например, ледники, и очень шумные, как моря в шторм. Я думаю, что Земля - это не просто почва под ногами, а место, где жизнь проявляется в миллионах разных форм.',
+      },
+      {
+        question: 'Какие общие черты ты находишь со своей планетой?',
+        answer:
+          'Мне кажется, я такая же разносторонняя. Это проявляется в моих хобби - их очень много, и они все разные. И в моем настроении: оно часто меняется, я яркая и эмоциональная, но иногда бываю спокойной.',
+      },
+      {
+        question: 'Перечисли парочку своих хобби. Чем занимаешься?',
+        answer:
+          'На самом деле я занималась многими вещами: вокал, гитара, какое-то время это был спорт, танцы, разное рукоделие.',
+      },
+      {
+        question: 'У многих планет есть спутники. Опиши своего идеального спутника.',
+        answer:
+          'Мне нравится архетип Луны. Луна часто символизирует любовь и симпатию в мире. Она всегда рядом с Землей, но её не всегда видно. Это как тихое счастье: оно всегда есть, но не прямо яркое. А еще она светит, когда темно.',
+      },
+      {
+        question: 'Что бы ты хотела успеть сделать в своей жизни? Есть мечты, которые хотелось бы воплотить?',
+        answer:
+          'Я бы хотела нести свои разные идеи в люди. Хотела бы учить людей, чтобы у них все лучше получалось. Моя мечта - научить человечество чему-то хорошему.',
+      },
+      {
+        question: 'В каком спорте ты бы хотела стать успешной и почему?',
+        answer:
+          'Наверное, это была бы художественная гимнастика или фигурное катание. Для меня важно всегда развиваться в разных направлениях, а эти виды спорта сочетают в себе много разных аспектов: и подбор музыки важен, и подбор костюмов, и сама физическая подготовка.',
+      },
+    ],
     theme: {
       background: '#070E1C',
       glow: 'rgba(74, 155, 217, 0.18)',
@@ -125,7 +157,7 @@ export const misses: Miss[] = [
     heroImage: ksyushaHero,
     planetImage: neptuneImg,
     planetPosition: 'topCenter',
-    isPublished: true,
+    isPublished: false,
     gallery: getGallery('Ксюша'),
     interview: [
       {
@@ -170,7 +202,7 @@ export const misses: Miss[] = [
     heroImage: emiliyaHero,
     planetImage: moonImg,
     planetPosition: 'topLeft',
-    isPublished: true,
+    isPublished: false,
     gallery: getGallery('Эмилия'),
     interview: [
       {
@@ -215,7 +247,7 @@ export const misses: Miss[] = [
     heroImage: angelinaHero,
     planetImage: marsImg,
     planetPosition: 'topRight',
-    isPublished: true,
+    isPublished: false,
     gallery: getGallery('Ангелина'),
     theme: {
       background: '#150A0A',
@@ -238,7 +270,7 @@ export const misses: Miss[] = [
     heroImage: adelyaHero,
     planetImage: uranusImg,
     planetPosition: 'topCenter',
-    isPublished: true,
+    isPublished: false,
     gallery: getGallery('Адель'),
     theme: {
       background: '#081515',
@@ -261,7 +293,7 @@ export const misses: Miss[] = [
     heroImage: polinaHero,
     planetImage: saturnImg,
     planetPosition: 'topLeft',
-    isPublished: true,
+    isPublished: false,
     gallery: getGallery('Полина'),
     theme: {
       background: '#14100A',
@@ -284,7 +316,7 @@ export const misses: Miss[] = [
     heroImage: sonyaHero,
     planetImage: venusImg,
     planetPosition: 'topRight',
-    isPublished: true,
+    isPublished: false,
     gallery: getGallery('Соня'),
     theme: {
       background: '#160D10',
