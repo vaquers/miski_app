@@ -6,7 +6,7 @@ import React, {
   useState,
   type CSSProperties,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { misses } from '@/data/misses';
 import { getAvailableMisses } from '@/utils/date';
 import type { DisplayMiss } from '@/types/miss';
@@ -19,16 +19,26 @@ import './MissesScreen.css';
 
 export const MissesScreen: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const scrollRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
   const rafRef = useRef(0);
-  const [activeIndex, setActiveIndex] = useState(0);
   const visibility = useVisibility();
 
   const allOrdered = useMemo(
     () => [...misses].sort((a, b) => a.order - b.order),
     [],
   );
+
+  const initialMissId = searchParams.get('miss');
+
+  const initialIndex = useMemo(() => {
+    if (!initialMissId) return 0;
+    const idx = allOrdered.findIndex((m) => m.id === initialMissId);
+    return idx >= 0 ? idx : 0;
+  }, [allOrdered, initialMissId]);
+
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
 
   const availableIds = useMemo(
     () => new Set(getAvailableMisses(misses).map((m) => m.id)),
@@ -51,6 +61,22 @@ export const MissesScreen: React.FC = () => {
       }),
     [allOrdered, visibility, availableIds],
   );
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const vh = container.clientHeight;
+    const targetIndex = initialIndex;
+
+    container.scrollTo({
+      top: vh * targetIndex,
+      left: 0,
+      behavior: 'auto',
+    });
+
+    setActiveIndex(targetIndex);
+  }, [initialIndex]);
 
   const updateSections = useCallback(() => {
     const container = scrollRef.current;
