@@ -272,7 +272,7 @@ export const misses: Miss[] = [
     id: 'adelya',
     order: 6,
     firstName: 'Адель',
-    lastName: 'Шаповалова',
+    lastName: 'Шиповалова',
     username: '@zeerrhy',
     className: '10 БИО1',
     instagramUrl: 'https://www.instagram.com/zeerrhy',
