@@ -214,7 +214,7 @@ export const misses: Miss[] = [
     heroImage: emiliyaHero,
     planetImage: moonImg,
     planetPosition: 'topLeft',
-    isPublished: true,
+    isPublished: false,
     gallery: getGallery('Эмилия'),
     interview: [
       {
