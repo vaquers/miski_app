@@ -1,4 +1,3 @@
-// Include Telegram UI styles first to allow our code override the package CSS.
 import '@telegram-apps/telegram-ui/dist/styles.css';
 
 import ReactDOM from 'react-dom/client';
@@ -11,22 +10,21 @@ import { init } from '@/init.ts';
 
 import './index.css';
 
-// Mock the environment in case, we are outside Telegram.
 import './mockEnv.ts';
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
-const renderApp = () => {
+function renderApp() {
   root.render(
     <StrictMode>
-      <Root/>
+      <Root />
     </StrictMode>,
   );
-};
+}
 
-const renderFallback = () => {
-  root.render(<EnvUnsupported/>);
-};
+function renderFallback() {
+  root.render(<EnvUnsupported />);
+}
 
 root.render(
   <div style={{
@@ -55,7 +53,7 @@ root.render(
       mockForMacOS: platform === 'macos',
     });
 
-    const timeoutMs = 8000;
+    const timeoutMs = 5000;
     const timeoutPromise = new Promise<void>((_, reject) => {
       setTimeout(() => reject(new Error('Init timeout')), timeoutMs);
     });
@@ -63,6 +61,7 @@ root.render(
     await Promise.race([initPromise, timeoutPromise]);
     renderApp();
   } catch (e) {
+    console.warn('Init failed, rendering app anyway:', e);
     try {
       renderApp();
     } catch {

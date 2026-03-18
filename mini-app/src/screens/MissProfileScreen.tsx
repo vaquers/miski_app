@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { misses } from '@/data/misses';
+import { misses, getMissGallery } from '@/data/misses';
 import { Lightbox } from '@/components/Lightbox/Lightbox';
 import { Footer } from '@/components/Footer/Footer';
 import { LazyImage } from '@/components/LazyImage/LazyImage';
@@ -17,9 +17,26 @@ export const MissProfileScreen: React.FC = () => {
 
   const miss = useMemo(() => misses.find((m) => m.id === id), [id]);
 
+  const gallery = useMemo(() => {
+    if (!id) return [];
+    return getMissGallery(id);
+  }, [id]);
+
   const handleGalleryClick = useCallback((index: number) => {
     setLightboxIndex(index);
   }, []);
+
+  useEffect(() => {
+    if (location.hash !== '#gallery') return;
+    const el = galleryRef.current;
+    if (!el) return;
+
+    const t = window.setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+    return () => window.clearTimeout(t);
+  }, [location.hash, id]);
 
   if (!miss) {
     return (
@@ -40,23 +57,9 @@ export const MissProfileScreen: React.FC = () => {
 
   const heroSrc = miss.heroImage || miss.previewImage;
 
-  useEffect(() => {
-    if (location.hash !== '#gallery') return;
-    const el = galleryRef.current;
-    if (!el) return;
-
-    // Даем разметке смонтироваться и высчитаться перед скроллом.
-    const t = window.setTimeout(() => {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 0);
-
-    return () => window.clearTimeout(t);
-  }, [location.hash, id]);
-
   return (
     <>
       <div className="profile-screen">
-        {/* Layer 1: Fullscreen blurred background */}
         <div className="profile-bg">
           <img
             src={heroSrc}
@@ -70,7 +73,6 @@ export const MissProfileScreen: React.FC = () => {
           <div className="profile-bg__overlay" />
         </div>
 
-        {/* Navigation */}
         <div className="profile-nav">
           <button
             className="profile-nav__btn"
@@ -83,7 +85,6 @@ export const MissProfileScreen: React.FC = () => {
           </button>
         </div>
 
-        {/* Layer 2: Hero Section */}
         <div className="profile-hero">
           <img
             src={heroSrc}
@@ -103,10 +104,8 @@ export const MissProfileScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Layer 3: Translucent Content Sheet */}
         <div className="profile-sheet">
           <div className="profile-sheet__inner">
-            {/* Instagram CTA */}
             <div className="profile-actions">
               {miss.instagramUrl ? (
                 <a
@@ -129,7 +128,6 @@ export const MissProfileScreen: React.FC = () => {
               )}
             </div>
 
-            {/* Info Chips */}
             {miss.className && (
               <div className="profile-info">
                 <div className="profile-info__chip">
@@ -138,7 +136,6 @@ export const MissProfileScreen: React.FC = () => {
               </div>
             )}
 
-            {/* Interview */}
             {miss.interview && miss.interview.length > 0 ? (
               <div className="profile-interview">
                 {miss.interview.map((qa, i) => (
@@ -154,12 +151,11 @@ export const MissProfileScreen: React.FC = () => {
               </div>
             ) : null}
 
-            {/* Gallery */}
-            {miss.gallery.length > 0 && (
+            {gallery.length > 0 && (
               <div className="profile-gallery-section" id="gallery" ref={galleryRef}>
                 <h2 className="profile-gallery-title">Фото</h2>
                 <div className="profile-gallery">
-                  {miss.gallery.map((photo, i) => (
+                  {gallery.map((photo, i) => (
                     <button
                       key={i}
                       className="profile-gallery__item"
@@ -173,6 +169,7 @@ export const MissProfileScreen: React.FC = () => {
                         loading="lazy"
                         decoding="async"
                         useIntersection={true}
+                        rootMargin="300px"
                         width={300}
                         height={400}
                       />
@@ -188,7 +185,7 @@ export const MissProfileScreen: React.FC = () => {
 
       {lightboxIndex !== null && (
         <Lightbox
-          images={miss.gallery}
+          images={gallery}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
         />

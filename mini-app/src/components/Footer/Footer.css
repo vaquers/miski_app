@@ -1,6 +1,6 @@
 .app-footer {
   width: 100%;
-  padding: 24px 16px calc(16px + var(--safe-bottom));
+  padding: 24px 16px calc(16px + var(--safe-bottom, 0px));
   text-align: center;
   font-size: 17px;
   font-weight: 400;

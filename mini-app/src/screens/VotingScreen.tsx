@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { initData } from '@tma.js/sdk-react';
 
@@ -53,12 +53,17 @@ function loadVoter(): VoterInfo | null {
           : null,
     };
   } catch {
+    localStorage.removeItem(VOTER_STORAGE_KEY);
     return null;
   }
 }
 
 function saveVoter(voter: VoterInfo) {
-  localStorage.setItem(VOTER_STORAGE_KEY, JSON.stringify(voter));
+  try {
+    localStorage.setItem(VOTER_STORAGE_KEY, JSON.stringify(voter));
+  } catch {
+    // Storage full or unavailable — non-critical
+  }
 }
 
 const AVATAR_CENTER_X = 50;
@@ -84,9 +89,27 @@ const VOTING_STAGES: Record<
   },
 };
 
+const PROFILE_OPTIONS = [
+  'гость',
+  'выпускник',
+  'ГУМ',
+  'ФИЛ',
+  'Ф',
+  'М',
+  'ИФ',
+  'ИМ',
+  'ХИМ',
+  'БИО-1',
+  'БИО-2',
+  'ИСТ',
+  'ОБЩ',
+  'ЭГ',
+] as const;
+
 export const VotingScreen: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
   const galaxy = useMemo(
     () => (
       <Galaxy
@@ -127,6 +150,15 @@ export const VotingScreen: React.FC = () => {
     return s === 'photos' ? 'photos' : 'defile';
   }, [searchParams]);
 
+  const tgId = useMemo(() => {
+    try {
+      const userId = initData.state()?.user?.id;
+      return typeof userId === 'number' ? userId : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const [stage, setStage] = useState<VotingStage>(initialStage);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [flyingIndex, setFlyingIndex] = useState<number | null>(null);
@@ -143,17 +175,7 @@ export const VotingScreen: React.FC = () => {
   >(null);
 
   const participants = remoteParticipants ?? localParticipants;
-
-  if (!participants.length) {
-    return null;
-  }
-
   const currentParticipant = participants[selectedIndex] ?? participants[0];
-
-  const tgId = useMemo(() => {
-    const userId = initData.state()?.user?.id;
-    return typeof userId === 'number' ? userId : null;
-  }, []);
 
   useEffect(() => {
     setStage(initialStage);
@@ -161,8 +183,10 @@ export const VotingScreen: React.FC = () => {
   }, [initialStage]);
 
   useEffect(() => {
-    getParticipants()
+    const ctrl = new AbortController();
+    getParticipants(ctrl.signal)
       .then((list) => {
+        if (ctrl.signal.aborted) return;
         const byId = new Map(localParticipants.map((p) => [p.id, p]));
         const merged = (Array.isArray(list) ? list : [])
           .map((p) => {
@@ -185,18 +209,23 @@ export const VotingScreen: React.FC = () => {
         if (merged.length) setRemoteParticipants(merged);
       })
       .catch(() => {
-        // если API недоступно, остаёмся на локальных данных
+        // API unavailable — use local data
       });
+
+    return () => ctrl.abort();
   }, [localParticipants]);
 
-  const handleVote = () => {
-    if (isAnimatingVote) return;
+  const handleVote = useCallback(() => {
+    if (isAnimatingVote || !participants.length) return;
     setVoteError(null);
 
     if (!tgId) {
       setVoteError('Не удалось получить tg id пользователя.');
       return;
     }
+
+    const target = currentParticipant;
+    if (!target) return;
 
     const nextStage: VotingStage | null =
       stage === 'defile' ? 'photos' : stage === 'photos' ? 'success' : null;
@@ -209,9 +238,9 @@ export const VotingScreen: React.FC = () => {
 
     const nomination: VotingNomination =
       stage === 'photos' ? 'photos' : 'defile';
-    void vote({
+    vote({
       tg_id: tgId,
-      participant_id: currentParticipant.id,
+      participant_id: target.id,
       nomination,
       voter: voter
         ? {
@@ -229,7 +258,7 @@ export const VotingScreen: React.FC = () => {
       setFlyingIndex(null);
       setIsAnimatingVote(false);
     });
-  };
+  }, [isAnimatingVote, participants.length, tgId, currentParticipant, stage, selectedIndex, voter]);
 
   useEffect(() => {
     if (!isAnimatingVote || !pendingStage) return;
@@ -259,7 +288,7 @@ export const VotingScreen: React.FC = () => {
     voterProfile !== '' &&
     (!isSchoolProfile || voterParallel === '10' || voterParallel === '11');
 
-  const handleSubmitVoter = () => {
+  const handleSubmitVoter = useCallback(() => {
     if (!canSubmitVoter) return;
     const next: VoterInfo = {
       firstName: voterFirstName.trim(),
@@ -269,7 +298,18 @@ export const VotingScreen: React.FC = () => {
     };
     saveVoter(next);
     setVoter(next);
-  };
+  }, [canSubmitVoter, voterFirstName, voterLastName, voterProfile, isSchoolProfile, voterParallel]);
+
+  if (!participants.length) {
+    return (
+      <div className="voting-screen">
+        <div className="voting-galaxy-bg">{galaxy}</div>
+        <div className="voting-success">
+          <p className="voting-success-subtitle">Загрузка участниц…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="voting-screen">
@@ -324,24 +364,7 @@ export const VotingScreen: React.FC = () => {
                   <option value="" disabled>
                     Выбери…
                   </option>
-                  {(
-                    [
-                      'гость',
-                      'выпускник',
-                      'ГУМ',
-                      'ФИЛ',
-                      'Ф',
-                      'М',
-                      'ИФ',
-                      'ИМ',
-                      'ХИМ',
-                      'БИО-1',
-                      'БИО-2',
-                      'ИСТ',
-                      'ОБЩ',
-                      'ЭГ',
-                    ] as const
-                  ).map((p) => (
+                  {PROFILE_OPTIONS.map((p) => (
                     <option key={p} value={p}>
                       {p}
                     </option>
@@ -394,10 +417,10 @@ export const VotingScreen: React.FC = () => {
         <div className="voting-main">
           <header className="voting-header">
             <p className="voting-title-line-1">
-              {VOTING_STAGES[stage].line1}
+              {VOTING_STAGES[stage as Exclude<VotingStage, 'success'>]?.line1}
             </p>
             <p className="voting-title-line-2 voting-decorative">
-              {VOTING_STAGES[stage].line2}
+              {VOTING_STAGES[stage as Exclude<VotingStage, 'success'>]?.line2}
             </p>
           </header>
 
@@ -449,6 +472,8 @@ export const VotingScreen: React.FC = () => {
                           className="voting-avatar-image"
                           width={100}
                           height={100}
+                          loading="lazy"
+                          decoding="async"
                         />
                       </div>
                     </div>
@@ -459,7 +484,7 @@ export const VotingScreen: React.FC = () => {
             </div>
 
             <div className="voting-selected-name voting-decorative">
-              {currentParticipant.name}
+              {currentParticipant?.name}
             </div>
           </main>
 
@@ -469,7 +494,7 @@ export const VotingScreen: React.FC = () => {
                 type="button"
                 className="voting-secondary-button"
                 onClick={() =>
-                  navigate(`/miss/${currentParticipant.id}#gallery`, {
+                  navigate(`/miss/${currentParticipant?.id}#gallery`, {
                     state: { returnTo: '/voting?stage=photos' },
                   })
                 }
