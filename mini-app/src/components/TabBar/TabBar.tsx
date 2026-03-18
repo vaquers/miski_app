@@ -10,7 +10,7 @@ import heartFillIcon from '../../../assets/icons/heart.fill.svg';
 const TABS = [
   {
     id: 'misses',
-    label: 'Миски',
+    label: 'Мисски',
     icon: crownIcon,
     iconActive: crownFillIcon,
     path: '/',
@@ -34,10 +34,6 @@ export const TabBar: React.FC = () => {
   }, [location.pathname]);
 
   if (location.pathname.startsWith('/miss')) return null;
-
-  // TODO: temporarily hidden, restore when needed
-  const isHidden = true;
-  if (isHidden) return null;
 
   return (
     <div className="tabbar-wrapper">

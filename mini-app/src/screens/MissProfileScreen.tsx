@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { misses } from '@/data/misses';
 import { Lightbox } from '@/components/Lightbox/Lightbox';
 import { Footer } from '@/components/Footer/Footer';
@@ -9,7 +9,11 @@ import './MissProfileScreen.css';
 export const MissProfileScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const galleryRef = useRef<HTMLDivElement | null>(null);
+  const returnTo =
+    (location.state as { returnTo?: string } | null)?.returnTo ?? null;
 
   const miss = useMemo(() => misses.find((m) => m.id === id), [id]);
 
@@ -36,6 +40,19 @@ export const MissProfileScreen: React.FC = () => {
 
   const heroSrc = miss.heroImage || miss.previewImage;
 
+  useEffect(() => {
+    if (location.hash !== '#gallery') return;
+    const el = galleryRef.current;
+    if (!el) return;
+
+    // Даем разметке смонтироваться и высчитаться перед скроллом.
+    const t = window.setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+
+    return () => window.clearTimeout(t);
+  }, [location.hash, id]);
+
   return (
     <>
       <div className="profile-screen">
@@ -57,7 +74,7 @@ export const MissProfileScreen: React.FC = () => {
         <div className="profile-nav">
           <button
             className="profile-nav__btn"
-            onClick={() => navigate('/')}
+            onClick={() => navigate(returnTo ?? '/')}
             aria-label="Закрыть"
           >
             <svg width="16" height="13" viewBox="0 0 599 484.25" fill="none">
@@ -139,7 +156,7 @@ export const MissProfileScreen: React.FC = () => {
 
             {/* Gallery */}
             {miss.gallery.length > 0 && (
-              <div className="profile-gallery-section">
+              <div className="profile-gallery-section" id="gallery" ref={galleryRef}>
                 <h2 className="profile-gallery-title">Фото</h2>
                 <div className="profile-gallery">
                   {miss.gallery.map((photo, i) => (

@@ -18,6 +18,27 @@ import planetWhat from '../../assets/miski_main/planet_what.png';
 import './MissesScreen.css';
 
 export const MissesScreen: React.FC = () => {
+  const galaxy = useMemo(
+    () => (
+      <Galaxy
+        mouseRepulsion={false}
+        mouseInteraction={false}
+        density={1}
+        glowIntensity={0.3}
+        saturation={0}
+        hueShift={140}
+        twinkleIntensity={0.3}
+        rotationSpeed={0.1}
+        repulsionStrength={2}
+        autoCenterRepulsion={0}
+        starSpeed={0.5}
+        speed={1}
+        transparent={false}
+      />
+    ),
+    [],
+  );
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -161,21 +182,7 @@ export const MissesScreen: React.FC = () => {
   return (
     <>
       <div className="misses-galaxy-bg">
-        <Galaxy
-          mouseRepulsion={false}
-          mouseInteraction={false}
-          density={1}
-          glowIntensity={0.3}
-          saturation={0}
-          hueShift={140}
-          twinkleIntensity={0.3}
-          rotationSpeed={0.1}
-          repulsionStrength={2}
-          autoCenterRepulsion={0}
-          starSpeed={0.5}
-          speed={1}
-          transparent={false}
-        />
+        {galaxy}
       </div>
       <div className="misses-screen" ref={scrollRef}>
         {displayMisses.map((miss, index) => {

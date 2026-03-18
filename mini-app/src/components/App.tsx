@@ -33,6 +33,7 @@ function AppContent() {
 
   return (
     <>
+      <div className="app-global-bg" aria-hidden />
       <Routes>
         {routes.map((route) => (
           <Route

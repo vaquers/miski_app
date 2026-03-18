@@ -18,7 +18,7 @@
   flex: 1;
   max-width: 209px;
   height: 62px;
-  background: rgba(20, 20, 30, 0.6);
+  background: rgba(33, 33, 33, 0.6);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: none;
