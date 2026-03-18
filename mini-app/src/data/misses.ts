@@ -9,16 +9,16 @@ import uranusImg from '../../assets/planets/uranus.png';
 import saturnImg from '../../assets/planets/saturn.png';
 import venusImg from '../../assets/planets/venus.png';
 
-import alinaPreview from '../../assets/miski_main/alina.JPG';
-import nastyaPreview from '../../assets/miski_main/nastya.JPG';
-import ksyushaPreview from '../../assets/miski_main/ksusha.JPG';
+import alinaPreview from '../../assets/miski_main/alina.jpg';
+import nastyaPreview from '../../assets/miski_main/nastya.jpg';
+import ksyushaPreview from '../../assets/miski_main/ksusha.jpg';
 import emiliyaPreview from '../../assets/miski_main/emilia.jpg';
 import angelinaPreview from '../../assets/miski_main/angelina.jpg';
-import adelyaPreview from '../../assets/miski_main/adel.JPG';
-import polinaPreview from '../../assets/miski_main/polina.JPG';
-import sonyaPreview from '../../assets/miski_main/sonya.JPG';
+import adelyaPreview from '../../assets/miski_main/adel.jpg';
+import polinaPreview from '../../assets/miski_main/polina.jpg';
+import sonyaPreview from '../../assets/miski_main/sonya.jpg';
 
-import alinaHero from '../../assets/first_in_galary/alina.JPG';
+import alinaHero from '../../assets/first_in_galary/alina.jpg';
 import nastyaHero from '../../assets/first_in_galary/nastya.png';
 import ksyushaHero from '../../assets/first_in_galary/ksusha.jpg';
 import emiliyaHero from '../../assets/first_in_galary/emilia.png';
