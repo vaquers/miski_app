@@ -1,10 +1,12 @@
+const PROD_API_BASE = 'https://miskiapp-production.up.railway.app';
+
 function getApiBaseUrl(): string {
-  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-
-  if (import.meta.env.PROD) return 'https://miskiapp-production.up.railway.app';
-
-  return '';
+  if (!import.meta.env.PROD) {
+    if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    return '';
+  }
+  return PROD_API_BASE;
 }
 
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -92,7 +94,6 @@ export async function requestJsonWithApiFallback<T = Json>(
   }
 }
 
-// Simple in-memory cache for GET requests
 const responseCache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL_MS = 60_000;
 
