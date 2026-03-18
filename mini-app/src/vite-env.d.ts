@@ -1,16 +1,4 @@
 /// <reference types="vite/client" />
 
-declare module '*.JPG' {
-  const src: string;
-  export default src;
-}
-
-declare module '*.JPEG' {
-  const src: string;
-  export default src;
-}
-
-declare module '*.PNG' {
-  const src: string;
-  export default src;
-}
+declare const __BUILD_COMMIT__: string;
+declare const __BUILD_TIME__: string;

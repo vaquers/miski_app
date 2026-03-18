@@ -12,6 +12,16 @@ import './index.css';
 
 import './mockEnv.ts';
 
+// Build fingerprint — always log, never strip
+const BUILD_INFO = {
+  commit: typeof __BUILD_COMMIT__ !== 'undefined' ? __BUILD_COMMIT__ : 'dev',
+  builtAt: typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString(),
+  env: import.meta.env.MODE,
+  source: 'vercel',
+};
+(window as any).__APP_BUILD_INFO__ = BUILD_INFO;
+console.info('%c[BUILD]', 'color:#0ff;font-weight:bold', BUILD_INFO);
+
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 function renderApp() {

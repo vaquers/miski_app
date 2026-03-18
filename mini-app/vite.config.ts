@@ -2,9 +2,22 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import mkcert from 'vite-plugin-mkcert';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { execSync } from 'child_process';
+
+function getGitCommitSha(): string {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'unknown';
+  }
+}
 
 export default defineConfig({
   base: '/',
+  define: {
+    __BUILD_COMMIT__: JSON.stringify(getGitCommitSha()),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   css: {
     preprocessorOptions: {
       scss: {
@@ -22,7 +35,7 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true,
+        drop_console: false,
       },
     },
     rollupOptions: {
