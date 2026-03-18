@@ -28,10 +28,17 @@ export const TabBar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const tabs = useMemo(() => {
+    if (import.meta.env.PROD) {
+      return TABS.filter((t) => t.id !== 'voting');
+    }
+    return TABS;
+  }, []);
+
   const activeIndex = useMemo(() => {
-    const idx = TABS.findIndex((t) => t.path === location.pathname);
+    const idx = tabs.findIndex((t) => t.path === location.pathname);
     return idx >= 0 ? idx : 0;
-  }, [location.pathname]);
+  }, [location.pathname, tabs]);
 
   if (location.pathname.startsWith('/miss')) return null;
 
@@ -42,7 +49,7 @@ export const TabBar: React.FC = () => {
           className="tabbar-active-indicator"
           style={{ transform: `translateX(${activeIndex * 100}%)` }}
         />
-        {TABS.map((tab, index) => {
+        {tabs.map((tab, index) => {
           const isActive = index === activeIndex;
           return (
             <button
