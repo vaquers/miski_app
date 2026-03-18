@@ -18,7 +18,7 @@
   inset: 0;
   padding-top: calc(8px + var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
   padding-bottom: calc(
-    24px
+    24px + 62px
     + var(--tg-safe-area-inset-bottom, 0px)
     + var(--tg-content-safe-area-inset-bottom, 0px)
   );

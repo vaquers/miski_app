@@ -58,6 +58,15 @@ body {
 #root {
   height: 100%;
   width: 100%;
+  background: var(--page-bg);
+}
+
+.app-global-bg {
+  position: fixed;
+  inset: 0;
+  background: var(--page-bg);
+  z-index: -1;
+  pointer-events: none;
 }
 
 button {
