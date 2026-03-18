@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from datetime import datetime
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-from config import WEBAPP_URL
+from config import get_webapp_url
 
 
 async def regime_dnevnik(message: types.Message, state: FSMContext = None):
@@ -29,7 +29,7 @@ async def main_menu():
         [
             types.KeyboardButton(
                 text="📖 дневник",
-                web_app=WebAppInfo(url=WEBAPP_URL),
+                web_app=WebAppInfo(url=get_webapp_url()),
             )
         ],
         [types.KeyboardButton(text="🧠 TudoAI")]
