@@ -18,16 +18,32 @@ async function requestJson<T = Json>(
   const baseUrl = getApiBaseUrl();
   const url = baseUrl ? `${baseUrl}${path}` : path;
 
+  const headers = new Headers(init?.headers ?? undefined);
+  if (!headers.has('accept')) {
+    headers.set('accept', 'application/json');
+  }
+
+  // Важно: не ставим content-type на GET/без body, иначе будет CORS preflight
+  // и в Telegram WebView это часто заканчивается "Load failed".
+  if (init?.body != null && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
+
   const res = await fetch(url, {
     ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
+    headers,
   });
 
   const text = await res.text();
-  const data = text ? (JSON.parse(text) as T) : (null as T);
+  let data: T = null as T;
+  if (text) {
+    try {
+      data = JSON.parse(text) as T;
+    } catch {
+      // Иногда бэк/прокси может вернуть HTML. Сохраним как строку для диагностики.
+      data = text as unknown as T;
+    }
+  }
 
   if (!res.ok) {
     const err = new Error(
