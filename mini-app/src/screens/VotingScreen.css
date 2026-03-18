@@ -23,7 +23,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: calc(var(--safe-top) + 16px) 24px 16px;
+  /* Резервируем место снизу под фиксированные кнопки + tabbar */
+  padding: calc(var(--safe-top) + 16px) 24px
+    calc(16px + var(--safe-bottom) + 62px + 52px + 10px + 52px);
   gap: 24px;
   position: relative;
   z-index: 1;
@@ -64,6 +66,15 @@
   flex-direction: column;
   align-items: stretch;
   position: relative;
+}
+
+.voting-grid-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 400px;
+  flex-shrink: 0;
 }
 
 .voting-form {
@@ -136,10 +147,7 @@
 }
 
 .voting-grid {
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   width: 400px;
   height: 400px;
 }
@@ -320,10 +328,8 @@
   font-size: 32px;
   text-align: center;
   color: rgba(255, 255, 255, 0.96);
-  position: absolute;
-  top: 500px;
-  left: 32px;
-  right: 32px;
+  margin-top: 18px;
+  padding: 0 8px;
 }
 
 .voting-cta-wrap {

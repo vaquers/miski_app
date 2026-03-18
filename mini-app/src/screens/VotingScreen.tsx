@@ -400,7 +400,8 @@ export const VotingScreen: React.FC = () => {
           </header>
 
           <main className="voting-body" aria-label="Выбор участницы">
-            <div className="voting-grid">
+            <div className="voting-grid-wrap">
+              <div className="voting-grid">
               <div
                 className={`voting-grid-center${
                   isAnimatingVote ? ' voting-grid-center--receive' : ''
@@ -452,6 +453,7 @@ export const VotingScreen: React.FC = () => {
                   </button>
                 );
               })}
+              </div>
             </div>
 
             <div className="voting-selected-name voting-decorative">
