@@ -12,6 +12,55 @@ import './VotingScreen.css';
 
 type VotingStage = 'defile' | 'photos' | 'success';
 
+type VoterProfile =
+  | 'гость'
+  | 'выпускник'
+  | 'ГУМ'
+  | 'ФИЛ'
+  | 'Ф'
+  | 'М'
+  | 'ИФ'
+  | 'ИМ'
+  | 'ХИМ'
+  | 'БИО-1'
+  | 'БИО-2'
+  | 'ИСТ'
+  | 'ОБЩ'
+  | 'ЭГ';
+
+type VoterInfo = {
+  firstName: string;
+  lastName: string;
+  profile: VoterProfile;
+  parallel: '10' | '11' | null;
+};
+
+const VOTER_STORAGE_KEY = 'miski:voting:voter';
+
+function loadVoter(): VoterInfo | null {
+  try {
+    const raw = localStorage.getItem(VOTER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<VoterInfo>;
+    if (!parsed.firstName || !parsed.lastName || !parsed.profile) return null;
+    return {
+      firstName: String(parsed.firstName).trim(),
+      lastName: String(parsed.lastName).trim(),
+      profile: parsed.profile as VoterProfile,
+      parallel:
+        parsed.parallel === '10' || parsed.parallel === '11'
+          ? parsed.parallel
+          : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveVoter(voter: VoterInfo) {
+  localStorage.setItem(VOTER_STORAGE_KEY, JSON.stringify(voter));
+}
+
 const AVATAR_CENTER_X = 50;
 const AVATAR_CENTER_Y = 50;
 const AVATAR_RADIUS_X = 38;
@@ -82,6 +131,11 @@ export const VotingScreen: React.FC = () => {
   const [pendingStage, setPendingStage] = useState<VotingStage | null>(null);
   const [isAnimatingVote, setIsAnimatingVote] = useState(false);
   const [voteError, setVoteError] = useState<string | null>(null);
+  const [voter, setVoter] = useState<VoterInfo | null>(() => loadVoter());
+  const [voterFirstName, setVoterFirstName] = useState('');
+  const [voterLastName, setVoterLastName] = useState('');
+  const [voterProfile, setVoterProfile] = useState<VoterProfile | ''>('');
+  const [voterParallel, setVoterParallel] = useState<'10' | '11' | ''>('');
   const [remoteParticipants, setRemoteParticipants] = useState<
     { id: string; name: string; image: string }[] | null
   >(null);
@@ -157,6 +211,14 @@ export const VotingScreen: React.FC = () => {
       tg_id: tgId,
       participant_id: currentParticipant.id,
       nomination,
+      voter: voter
+        ? {
+            firstName: voter.firstName,
+            lastName: voter.lastName,
+            profile: voter.profile,
+            parallel: voter.parallel,
+          }
+        : undefined,
     }).catch((e) => {
       setVoteError(
         e instanceof Error ? e.message : 'Не удалось отправить голос. Попробуй ещё раз.',
@@ -186,13 +248,147 @@ export const VotingScreen: React.FC = () => {
   const isSuccess = stage === 'success';
   const isPhotosStage = stage === 'photos';
 
+  const isSchoolProfile =
+    voterProfile !== '' && voterProfile !== 'гость' && voterProfile !== 'выпускник';
+
+  const canSubmitVoter =
+    voterFirstName.trim().length > 0 &&
+    voterLastName.trim().length > 0 &&
+    voterProfile !== '' &&
+    (!isSchoolProfile || voterParallel === '10' || voterParallel === '11');
+
+  const handleSubmitVoter = () => {
+    if (!canSubmitVoter) return;
+    const next: VoterInfo = {
+      firstName: voterFirstName.trim(),
+      lastName: voterLastName.trim(),
+      profile: voterProfile as VoterProfile,
+      parallel: isSchoolProfile ? (voterParallel as '10' | '11') : null,
+    };
+    saveVoter(next);
+    setVoter(next);
+  };
+
   return (
     <div className="voting-screen">
       <div className="voting-galaxy-bg">
         {galaxy}
       </div>
 
-      {!isSuccess && (
+      {!voter && (
+        <div className="voting-main">
+          <header className="voting-header">
+            <p className="voting-title-line-1">Перед голосованием</p>
+            <p className="voting-title-line-2 voting-decorative">
+              представься, пожалуйста.
+            </p>
+          </header>
+
+          <main className="voting-body" aria-label="Данные голосующего">
+            <div className="voting-form">
+              <label className="voting-field">
+                <span className="voting-field-label">Имя</span>
+                <input
+                  className="voting-input"
+                  value={voterFirstName}
+                  onChange={(e) => setVoterFirstName(e.target.value)}
+                  placeholder="Иван"
+                  autoComplete="given-name"
+                />
+              </label>
+
+              <label className="voting-field">
+                <span className="voting-field-label">Фамилия</span>
+                <input
+                  className="voting-input"
+                  value={voterLastName}
+                  onChange={(e) => setVoterLastName(e.target.value)}
+                  placeholder="Иванов"
+                  autoComplete="family-name"
+                />
+              </label>
+
+              <label className="voting-field">
+                <span className="voting-field-label">Профиль</span>
+                <select
+                  className="voting-select"
+                  value={voterProfile}
+                  onChange={(e) => {
+                    const v = e.target.value as VoterProfile | '';
+                    setVoterProfile(v);
+                    setVoterParallel('');
+                  }}
+                >
+                  <option value="" disabled>
+                    Выбери…
+                  </option>
+                  {(
+                    [
+                      'гость',
+                      'выпускник',
+                      'ГУМ',
+                      'ФИЛ',
+                      'Ф',
+                      'М',
+                      'ИФ',
+                      'ИМ',
+                      'ХИМ',
+                      'БИО-1',
+                      'БИО-2',
+                      'ИСТ',
+                      'ОБЩ',
+                      'ЭГ',
+                    ] as const
+                  ).map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {isSchoolProfile && (
+                <label className="voting-field">
+                  <span className="voting-field-label">Параллель</span>
+                  <div className="voting-parallel">
+                    <button
+                      type="button"
+                      className={`voting-parallel-btn${
+                        voterParallel === '10' ? ' active' : ''
+                      }`}
+                      onClick={() => setVoterParallel('10')}
+                    >
+                      10
+                    </button>
+                    <button
+                      type="button"
+                      className={`voting-parallel-btn${
+                        voterParallel === '11' ? ' active' : ''
+                      }`}
+                      onClick={() => setVoterParallel('11')}
+                    >
+                      11
+                    </button>
+                  </div>
+                </label>
+              )}
+            </div>
+          </main>
+
+          <div className="voting-cta-wrap">
+            <button
+              type="button"
+              className="voting-cta-button"
+              onClick={handleSubmitVoter}
+              disabled={!canSubmitVoter}
+            >
+              Продолжить
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!isSuccess && voter && (
         <div className="voting-main">
           <header className="voting-header">
             <p className="voting-title-line-1">

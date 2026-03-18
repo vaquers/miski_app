@@ -15,6 +15,12 @@ export type VoteRequest = {
   tg_id: number;
   participant_id: string;
   nomination: VotingNomination;
+  voter?: {
+    firstName: string;
+    lastName: string;
+    profile: string;
+    parallel?: '10' | '11' | null;
+  };
 };
 
 export async function getParticipants(): Promise<ParticipantDto[]> {
@@ -34,6 +40,13 @@ export async function vote(req: VoteRequest): Promise<unknown> {
     participant_id: req.participant_id,
     stage: req.nomination,
     category: req.nomination,
+    voter: req.voter,
+    firstName: req.voter?.firstName,
+    lastName: req.voter?.lastName,
+    profile: req.voter?.profile,
+    parallel: req.voter?.parallel ?? undefined,
+    first_name: req.voter?.firstName,
+    last_name: req.voter?.lastName,
   };
 
   return await requestJsonWithApiFallback('/vote', {

@@ -66,6 +66,75 @@
   position: relative;
 }
 
+.voting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 12px;
+}
+
+.voting-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.voting-field-label {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.voting-input,
+.voting-select {
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  padding: 0 14px;
+  outline: none;
+  font-size: 16px;
+}
+
+.voting-select {
+  appearance: none;
+}
+
+.voting-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.voting-parallel {
+  display: flex;
+  gap: 10px;
+}
+
+.voting-parallel-btn {
+  flex: 1;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.voting-parallel-btn.active {
+  background: rgba(221, 253, 78, 0.18);
+  border-color: rgba(221, 253, 78, 0.35);
+  color: rgba(221, 253, 78, 0.95);
+}
+
+.voting-parallel-btn:active {
+  transform: translateY(1px);
+}
+
 .voting-grid {
   position: absolute;
   top: 6px;
