@@ -177,6 +177,8 @@ interface GalaxyProps {
   density?: number;
   hueShift?: number;
   disableAnimation?: boolean;
+  maxFps?: number;
+  resolutionScale?: number;
   speed?: number;
   mouseInteraction?: boolean;
   glowIntensity?: number;
@@ -196,6 +198,8 @@ export default function Galaxy({
   density = 1,
   hueShift = 140,
   disableAnimation = false,
+  maxFps = 60,
+  resolutionScale = 1,
   speed = 1.0,
   mouseInteraction = true,
   glowIntensity = 0.3,
@@ -234,7 +238,7 @@ export default function Galaxy({
     let program: Program;
 
     function resize() {
-      const scale = 1;
+      const scale = Math.max(0.3, Math.min(1, resolutionScale));
       renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
       if (program) {
         program.uniforms.uResolution.value = new Color(
@@ -279,9 +283,15 @@ export default function Galaxy({
 
     const mesh = new Mesh(gl, { geometry, program });
     let animateId: number;
+    let lastRender = 0;
+    const minFrameMs = maxFps > 0 ? 1000 / maxFps : 0;
 
     function update(t: number) {
       animateId = requestAnimationFrame(update);
+
+      if (minFrameMs > 0 && t - lastRender < minFrameMs) return;
+      lastRender = t;
+
       if (!disableAnimation) {
         program.uniforms.uTime.value = t * 0.001;
         program.uniforms.uStarSpeed.value = (t * 0.001 * starSpeed) / 10.0;
@@ -336,6 +346,8 @@ export default function Galaxy({
     density,
     hueShift,
     disableAnimation,
+    maxFps,
+    resolutionScale,
     speed,
     mouseInteraction,
     glowIntensity,

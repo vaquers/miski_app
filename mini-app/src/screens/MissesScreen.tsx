@@ -23,7 +23,7 @@ export const MissesScreen: React.FC = () => {
       <Galaxy
         mouseRepulsion={false}
         mouseInteraction={false}
-        density={1}
+        density={0.8}
         glowIntensity={0.3}
         saturation={0}
         hueShift={140}
@@ -32,8 +32,10 @@ export const MissesScreen: React.FC = () => {
         repulsionStrength={2}
         autoCenterRepulsion={0}
         starSpeed={0.5}
-        speed={1}
+        speed={0.8}
         transparent={false}
+        maxFps={30}
+        resolutionScale={0.65}
       />
     ),
     [],
