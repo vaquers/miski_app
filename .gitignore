@@ -1,0 +1,21 @@
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# history
+.history/
+
+# env
+.env
+
+# mac
+.DS_Store
+
+# node
+node_modules/
+
+# build
+build/
+dist/
