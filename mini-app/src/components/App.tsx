@@ -112,10 +112,13 @@ function AppContent() {
     if (!startParam || didApplyStartParam.current) return;
     if (location.pathname !== '/') return;
 
-    const currentParams = new URLSearchParams(location.search);
-    if (currentParams.get('miss') === startParam) return;
-
     didApplyStartParam.current = true;
+
+    if (startParam === 'voting') {
+      navigate('/voting', { replace: true });
+      return;
+    }
+
     navigate(`/?miss=${encodeURIComponent(startParam)}`, { replace: true });
   }, [lp.tgWebAppStartParam, navigate, location.pathname, location.search]);
 
