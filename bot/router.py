@@ -7,10 +7,16 @@ from aiogram.types import (
 )
 from aiogram.filters import Command
 
-from config import ADMIN_ID, WEBAPP_URL, MISSES
+from config import ADMIN_ID, WEBAPP_URL, MISSES, APP_VERSION
 from bot.visibility import load_visibility, toggle_visibility
 
 router = Router()
+
+
+def _webapp_url() -> str:
+    """Return WEBAPP_URL with a cache-busting version parameter."""
+    sep = "&" if "?" in WEBAPP_URL else "?"
+    return f"{WEBAPP_URL}{sep}v={APP_VERSION}"
 
 
 def build_admin_keyboard() -> ReplyKeyboardMarkup:
@@ -43,7 +49,7 @@ async def cmd_start(message: Message) -> None:
                 [
                     KeyboardButton(
                         text="🌟 Открыть Мисс Лицей",
-                        web_app=WebAppInfo(url=WEBAPP_URL),
+                        web_app=WebAppInfo(url=_webapp_url()),
                     )
                 ]
             ],

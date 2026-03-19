@@ -1,9 +1,7 @@
 import { requestJsonWithApiFallback } from './apiBase';
 
-export type VotingNomination = 'defile' | 'photos';
-
 export type ParticipantDto = {
-  id: string;
+  id: number;
   firstName?: string;
   lastName?: string;
   name?: string;
@@ -13,53 +11,37 @@ export type ParticipantDto = {
 
 export type VoteRequest = {
   tg_id: number;
-  participant_id: string;
-  nomination: VotingNomination;
-  voter?: {
-    firstName: string;
-    lastName: string;
-    profile: string;
-    parallel?: '10' | '11' | null;
-  };
+  first_name: string;
+  last_name: string;
+  voter_class: string;
+  participant_id: number;
 };
 
-export async function getParticipants(): Promise<ParticipantDto[]> {
-  return await requestJsonWithApiFallback<ParticipantDto[]>('/participants');
+export async function getParticipants(signal?: AbortSignal): Promise<ParticipantDto[]> {
+  return await requestJsonWithApiFallback<ParticipantDto[]>('/participants', { signal });
 }
 
-export async function hasVoted(tgId: number): Promise<unknown> {
-  return await requestJsonWithApiFallback(`/has-voted/${tgId}`);
+export async function hasVoted(tgId: number, signal?: AbortSignal): Promise<unknown> {
+  return await requestJsonWithApiFallback(`/has-voted/${tgId}`, { signal });
 }
 
 export async function vote(req: VoteRequest): Promise<unknown> {
-  // Бэкенд может ожидать другие имена полей; отправим совместимый payload.
-  const payload = {
-    ...req,
-    tgId: req.tg_id,
-    participantId: req.participant_id,
-    participant_id: req.participant_id,
-    stage: req.nomination,
-    category: req.nomination,
-    voter: req.voter,
-    firstName: req.voter?.firstName,
-    lastName: req.voter?.lastName,
-    profile: req.voter?.profile,
-    parallel: req.voter?.parallel ?? undefined,
-    first_name: req.voter?.firstName,
-    last_name: req.voter?.lastName,
-  };
-
   return await requestJsonWithApiFallback('/vote', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      tg_id: req.tg_id,
+      first_name: req.first_name,
+      last_name: req.last_name,
+      voter_class: req.voter_class,
+      participant_id: req.participant_id,
+    }),
   });
 }
 
-export async function getResults(): Promise<unknown> {
-  return await requestJsonWithApiFallback('/results');
+export async function getResults(signal?: AbortSignal): Promise<unknown> {
+  return await requestJsonWithApiFallback('/results', { signal });
 }
 
-export async function getVoters(): Promise<unknown> {
-  return await requestJsonWithApiFallback('/voters');
+export async function getVoters(signal?: AbortSignal): Promise<unknown> {
+  return await requestJsonWithApiFallback('/voters', { signal });
 }
-

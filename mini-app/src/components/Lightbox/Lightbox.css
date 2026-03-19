@@ -16,14 +16,14 @@
 
 .lightbox__close {
   position: absolute;
-  top: calc(14px + var(--safe-top));
+  top: calc(var(--safe-top, 14px) + 8px);
   right: 16px;
   background: rgba(255, 255, 255, 0.1);
   border: none;
   border-radius: 50%;
   color: rgba(255, 255, 255, 0.85);
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   font-size: 16px;
   cursor: pointer;
   z-index: 10;
@@ -41,7 +41,7 @@
 
 .lightbox__counter {
   position: absolute;
-  top: calc(22px + var(--safe-top));
+  top: calc(var(--safe-top, 14px) + 18px);
   left: 50%;
   transform: translateX(-50%);
   color: rgba(255, 255, 255, 0.4);
@@ -53,15 +53,16 @@
 
 .lightbox__content {
   max-width: 92vw;
-  max-height: 85vh;
+  max-height: 80vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: calc(var(--safe-top, 0px) + 60px) 0 var(--safe-bottom, 0px);
 }
 
 .lightbox__img {
   max-width: 100%;
-  max-height: 85vh;
+  max-height: 80vh;
   object-fit: contain;
   border-radius: 8px;
   user-select: none;
@@ -82,8 +83,8 @@
   border: none;
   border-radius: 50%;
   color: rgba(255, 255, 255, 0.7);
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   font-size: 24px;
   cursor: pointer;
   display: flex;

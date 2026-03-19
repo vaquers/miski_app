@@ -2,10 +2,22 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import mkcert from 'vite-plugin-mkcert';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { execSync } from 'child_process';
 
-// https://vitejs.dev/config/
+function getGitCommitSha(): string {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'unknown';
+  }
+}
+
 export default defineConfig({
   base: '/',
+  define: {
+    __BUILD_COMMIT__: JSON.stringify(getGitCommitSha()),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   css: {
     preprocessorOptions: {
       scss: {
@@ -14,20 +26,13 @@ export default defineConfig({
     },
   },
   plugins: [
-    // Allows using React dev server along with building a React application with Vite.
-    // https://npmjs.com/package/@vitejs/plugin-react-swc
     react(),
-    // Allows using the compilerOptions.paths property in tsconfig.json.
-    // https://www.npmjs.com/package/vite-tsconfig-paths
     tsconfigPaths(),
-    // Creates a custom SSL certificate valid for the local machine.
-    // Using this plugin requires admin rights on the first dev-mode launch.
-    // https://www.npmjs.com/package/vite-plugin-mkcert
     process.env.HTTPS && mkcert(),
   ],
   build: {
     target: 'esnext',
-    minify: 'terser'
+    minify: 'terser',
   },
   publicDir: './public',
   server: {
@@ -35,7 +40,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://miskiapp-production.up.railway.app',
         changeOrigin: true,
       },
     },

@@ -1,5 +1,4 @@
-import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './Galaxy.css';
 
 const vertexShader = `
@@ -191,6 +190,40 @@ interface GalaxyProps {
   transparent?: boolean;
 }
 
+function detectWebGLSupport(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl =
+      canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return false;
+
+    // Check for minimum capability: shader compilation
+    const glCtx = gl as WebGLRenderingContext;
+    const vs = glCtx.createShader(glCtx.VERTEX_SHADER);
+    if (!vs) return false;
+    glCtx.shaderSource(vs, 'void main(){ gl_Position = vec4(0); }');
+    glCtx.compileShader(vs);
+    const ok = glCtx.getShaderParameter(vs, glCtx.COMPILE_STATUS);
+    glCtx.deleteShader(vs);
+    glCtx.getExtension('WEBGL_lose_context')?.loseContext();
+
+    return !!ok;
+  } catch {
+    return false;
+  }
+}
+
+function detectLowPerformance(): boolean {
+  // Rough heuristic: low core count or reported low memory
+  const nav = navigator as any;
+  if (nav.hardwareConcurrency && nav.hardwareConcurrency <= 2) return true;
+  if (nav.deviceMemory && nav.deviceMemory <= 2) return true;
+  return false;
+}
+
+const webglSupported = detectWebGLSupport();
+const lowPerformance = detectLowPerformance();
+
 export default function Galaxy({
   focal = [0.5, 0.5],
   rotation = [1.0, 0.0],
@@ -210,136 +243,235 @@ export default function Galaxy({
   rotationSpeed = 0.1,
   autoCenterRepulsion = 0,
   transparent = true,
-  ...rest
 }: GalaxyProps) {
   const ctnDom = useRef<HTMLDivElement>(null);
   const targetMousePos = useRef({ x: 0.5, y: 0.5 });
   const smoothMousePos = useRef({ x: 0.5, y: 0.5 });
   const targetMouseActive = useRef(0.0);
   const smoothMouseActive = useRef(0.0);
+  const [useFallback, setUseFallback] = useState(!webglSupported || lowPerformance);
 
   useEffect(() => {
+    if (useFallback) return;
     if (!ctnDom.current) return;
+
     const ctn = ctnDom.current;
-    const renderer = new Renderer({
-      alpha: transparent,
-      premultipliedAlpha: false
-    });
-    const gl = renderer.gl;
 
-    if (transparent) {
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.clearColor(0, 0, 0, 0);
-    } else {
-      gl.clearColor(0, 0, 0, 1);
-    }
+    let Renderer: any, Program: any, Mesh: any, Color: any, Triangle: any;
+    let destroyed = false;
+    const cleanupRef = { current: () => { destroyed = true; } };
 
-    let program: Program;
+    (async () => {
+      try {
+        const ogl = await import('ogl');
+        Renderer = ogl.Renderer;
+        Program = ogl.Program;
+        Mesh = ogl.Mesh;
+        Color = ogl.Color;
+        Triangle = ogl.Triangle;
+      } catch {
+        if (!destroyed) setUseFallback(true);
+        return;
+      }
 
-    function resize() {
-      const scale = Math.max(0.3, Math.min(1, resolutionScale));
-      renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
-      if (program) {
-        program.uniforms.uResolution.value = new Color(
-          gl.canvas.width,
-          gl.canvas.height,
-          gl.canvas.width / gl.canvas.height
+      if (destroyed) return;
+
+      let renderer: InstanceType<typeof Renderer>;
+      try {
+        renderer = new Renderer({
+          alpha: transparent,
+          premultipliedAlpha: false,
+        });
+      } catch {
+        if (!destroyed) setUseFallback(true);
+        return;
+      }
+
+      const gl = renderer.gl;
+
+      if (transparent) {
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.clearColor(0, 0, 0, 0);
+      } else {
+        gl.clearColor(0, 0, 0, 1);
+      }
+
+      let program: InstanceType<typeof Program>;
+
+      const effectiveScale = Math.max(0.3, Math.min(1, resolutionScale));
+
+      function resize() {
+        if (destroyed) return;
+        renderer.setSize(
+          ctn.offsetWidth * effectiveScale,
+          ctn.offsetHeight * effectiveScale,
         );
+        if (program) {
+          program.uniforms.uResolution.value = new Color(
+            gl.canvas.width,
+            gl.canvas.height,
+            gl.canvas.width / gl.canvas.height,
+          );
+        }
       }
-    }
-    window.addEventListener('resize', resize, false);
-    resize();
 
-    const geometry = new Triangle(gl);
-    program = new Program(gl, {
-      vertex: vertexShader,
-      fragment: fragmentShader,
-      uniforms: {
-        uTime: { value: 0 },
-        uResolution: {
-          value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height)
-        },
-        uFocal: { value: new Float32Array(focal) },
-        uRotation: { value: new Float32Array(rotation) },
-        uStarSpeed: { value: starSpeed },
-        uDensity: { value: density },
-        uHueShift: { value: hueShift },
-        uSpeed: { value: speed },
-        uMouse: {
-          value: new Float32Array([smoothMousePos.current.x, smoothMousePos.current.y])
-        },
-        uGlowIntensity: { value: glowIntensity },
-        uSaturation: { value: saturation },
-        uMouseRepulsion: { value: mouseRepulsion },
-        uTwinkleIntensity: { value: twinkleIntensity },
-        uRotationSpeed: { value: rotationSpeed },
-        uRepulsionStrength: { value: repulsionStrength },
-        uMouseActiveFactor: { value: 0.0 },
-        uAutoCenterRepulsion: { value: autoCenterRepulsion },
-        uTransparent: { value: transparent }
+      window.addEventListener('resize', resize, false);
+      resize();
+
+      const geometry = new Triangle(gl);
+
+      try {
+        program = new Program(gl, {
+          vertex: vertexShader,
+          fragment: fragmentShader,
+          uniforms: {
+            uTime: { value: 0 },
+            uResolution: {
+              value: new Color(
+                gl.canvas.width,
+                gl.canvas.height,
+                gl.canvas.width / gl.canvas.height,
+              ),
+            },
+            uFocal: { value: new Float32Array(focal) },
+            uRotation: { value: new Float32Array(rotation) },
+            uStarSpeed: { value: starSpeed },
+            uDensity: { value: density },
+            uHueShift: { value: hueShift },
+            uSpeed: { value: speed },
+            uMouse: {
+              value: new Float32Array([
+                smoothMousePos.current.x,
+                smoothMousePos.current.y,
+              ]),
+            },
+            uGlowIntensity: { value: glowIntensity },
+            uSaturation: { value: saturation },
+            uMouseRepulsion: { value: mouseRepulsion },
+            uTwinkleIntensity: { value: twinkleIntensity },
+            uRotationSpeed: { value: rotationSpeed },
+            uRepulsionStrength: { value: repulsionStrength },
+            uMouseActiveFactor: { value: 0.0 },
+            uAutoCenterRepulsion: { value: autoCenterRepulsion },
+            uTransparent: { value: transparent },
+          },
+        });
+      } catch {
+        // Shader compilation failed — fall back to CSS
+        window.removeEventListener('resize', resize);
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+        if (!destroyed) setUseFallback(true);
+        return;
       }
-    });
 
-    const mesh = new Mesh(gl, { geometry, program });
-    let animateId: number;
-    let lastRender = 0;
-    const minFrameMs = maxFps > 0 ? 1000 / maxFps : 0;
+      const mesh = new Mesh(gl, { geometry, program });
+      let animateId: number;
+      let lastRender = 0;
+      const minFrameMs = maxFps > 0 ? 1000 / maxFps : 0;
 
-    function update(t: number) {
+      // FPS monitoring: switch to fallback if sustained low FPS
+      let fpsFrameCount = 0;
+      let fpsStartTime = 0;
+      let lowFpsStreak = 0;
+      const FPS_CHECK_INTERVAL = 2000;
+      const LOW_FPS_THRESHOLD = 12;
+      const LOW_FPS_STRIKES = 2;
+
+      function update(t: number) {
+        if (destroyed) return;
+        animateId = requestAnimationFrame(update);
+
+        if (minFrameMs > 0 && t - lastRender < minFrameMs) return;
+        lastRender = t;
+
+        // FPS monitoring
+        fpsFrameCount++;
+        if (fpsStartTime === 0) fpsStartTime = t;
+        const elapsed = t - fpsStartTime;
+        if (elapsed >= FPS_CHECK_INTERVAL) {
+          const fps = (fpsFrameCount / elapsed) * 1000;
+          if (fps < LOW_FPS_THRESHOLD) {
+            lowFpsStreak++;
+            if (lowFpsStreak >= LOW_FPS_STRIKES) {
+              cancelAnimationFrame(animateId);
+              window.removeEventListener('resize', resize);
+              if (mouseInteraction) {
+                ctn.removeEventListener('mousemove', handleMouseMove);
+                ctn.removeEventListener('mouseleave', handleMouseLeave);
+              }
+              try { ctn.removeChild(gl.canvas); } catch {}
+              gl.getExtension('WEBGL_lose_context')?.loseContext();
+              if (!destroyed) setUseFallback(true);
+              return;
+            }
+          } else {
+            lowFpsStreak = 0;
+          }
+          fpsFrameCount = 0;
+          fpsStartTime = t;
+        }
+
+        if (!disableAnimation) {
+          program.uniforms.uTime.value = t * 0.001;
+          program.uniforms.uStarSpeed.value = (t * 0.001 * starSpeed) / 10.0;
+        }
+
+        const lerpFactor = 0.05;
+        smoothMousePos.current.x +=
+          (targetMousePos.current.x - smoothMousePos.current.x) * lerpFactor;
+        smoothMousePos.current.y +=
+          (targetMousePos.current.y - smoothMousePos.current.y) * lerpFactor;
+
+        smoothMouseActive.current +=
+          (targetMouseActive.current - smoothMouseActive.current) * lerpFactor;
+
+        program.uniforms.uMouse.value[0] = smoothMousePos.current.x;
+        program.uniforms.uMouse.value[1] = smoothMousePos.current.y;
+        program.uniforms.uMouseActiveFactor.value = smoothMouseActive.current;
+
+        renderer.render({ scene: mesh });
+      }
+
       animateId = requestAnimationFrame(update);
+      ctn.appendChild(gl.canvas);
 
-      if (minFrameMs > 0 && t - lastRender < minFrameMs) return;
-      lastRender = t;
-
-      if (!disableAnimation) {
-        program.uniforms.uTime.value = t * 0.001;
-        program.uniforms.uStarSpeed.value = (t * 0.001 * starSpeed) / 10.0;
+      function handleMouseMove(e: MouseEvent) {
+        const rect = ctn.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = 1.0 - (e.clientY - rect.top) / rect.height;
+        targetMousePos.current = { x, y };
+        targetMouseActive.current = 1.0;
       }
 
-      const lerpFactor = 0.05;
-      smoothMousePos.current.x += (targetMousePos.current.x - smoothMousePos.current.x) * lerpFactor;
-      smoothMousePos.current.y += (targetMousePos.current.y - smoothMousePos.current.y) * lerpFactor;
+      function handleMouseLeave() {
+        targetMouseActive.current = 0.0;
+      }
 
-      smoothMouseActive.current += (targetMouseActive.current - smoothMouseActive.current) * lerpFactor;
+      if (mouseInteraction) {
+        ctn.addEventListener('mousemove', handleMouseMove);
+        ctn.addEventListener('mouseleave', handleMouseLeave);
+      }
 
-      program.uniforms.uMouse.value[0] = smoothMousePos.current.x;
-      program.uniforms.uMouse.value[1] = smoothMousePos.current.y;
-      program.uniforms.uMouseActiveFactor.value = smoothMouseActive.current;
-
-      renderer.render({ scene: mesh });
-    }
-    animateId = requestAnimationFrame(update);
-    ctn.appendChild(gl.canvas);
-
-    function handleMouseMove(e: MouseEvent) {
-      const rect = ctn.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = 1.0 - (e.clientY - rect.top) / rect.height;
-      targetMousePos.current = { x, y };
-      targetMouseActive.current = 1.0;
-    }
-
-    function handleMouseLeave() {
-      targetMouseActive.current = 0.0;
-    }
-
-    if (mouseInteraction) {
-      ctn.addEventListener('mousemove', handleMouseMove);
-      ctn.addEventListener('mouseleave', handleMouseLeave);
-    }
+      // Store cleanup for the effect destructor
+      cleanupRef.current = () => {
+        destroyed = true;
+        cancelAnimationFrame(animateId);
+        window.removeEventListener('resize', resize);
+        if (mouseInteraction) {
+          ctn.removeEventListener('mousemove', handleMouseMove);
+          ctn.removeEventListener('mouseleave', handleMouseLeave);
+        }
+        try { ctn.removeChild(gl.canvas); } catch {}
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+      };
+    })();
 
     return () => {
-      cancelAnimationFrame(animateId);
-      window.removeEventListener('resize', resize);
-      if (mouseInteraction) {
-        ctn.removeEventListener('mousemove', handleMouseMove);
-        ctn.removeEventListener('mouseleave', handleMouseLeave);
-      }
-      ctn.removeChild(gl.canvas);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      cleanupRef.current();
     };
   }, [
+    useFallback,
     focal,
     rotation,
     starSpeed,
@@ -357,8 +489,12 @@ export default function Galaxy({
     rotationSpeed,
     repulsionStrength,
     autoCenterRepulsion,
-    transparent
+    transparent,
   ]);
 
-  return <div ref={ctnDom} className="galaxy-container" {...rest} />;
+  if (useFallback) {
+    return <div className="galaxy-fallback" aria-hidden />;
+  }
+
+  return <div ref={ctnDom} className="galaxy-container" aria-hidden />;
 }
