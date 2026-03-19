@@ -28,7 +28,7 @@ export const TabBar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const tabs = TABS;
+  const tabs = TABS.filter((t) => t.id !== 'voting');
 
   const activeIndex = useMemo(() => {
     const idx = tabs.findIndex((t) => t.path === location.pathname);

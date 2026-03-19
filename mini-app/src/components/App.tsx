@@ -19,9 +19,9 @@ const MissesScreen = lazy(() =>
 const MissProfileScreen = lazy(() =>
   import('@/screens/MissProfileScreen').then((m) => ({ default: m.MissProfileScreen })),
 );
-const VotingScreen = lazy(() =>
-  import('@/screens/VotingScreen').then((m) => ({ default: m.VotingScreen })),
-);
+// const VotingScreen = lazy(() =>
+//   import('@/screens/VotingScreen').then((m) => ({ default: m.VotingScreen })),
+// );
 
 function ScreenFallback() {
   return (
@@ -129,7 +129,7 @@ function AppContent() {
         <Suspense fallback={<ScreenFallback />}>
           <Routes>
             <Route path="/" element={<MissesScreen />} />
-            <Route path="/voting" element={<VotingScreen />} />
+            <Route path="/voting" element={<Navigate to="/" />} />
             <Route path="/miss/:id" element={<MissProfileScreen />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
