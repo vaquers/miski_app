@@ -224,7 +224,8 @@ export const VotingScreen: React.FC = () => {
   }, [isAnimatingVote, pendingStage]);
 
   const isPhotosStage = stage === 'photos';
-  const stageOpen = votingOpen ? votingOpen[stage as keyof VotingStatusDto] ?? false : true;
+  const isAdmin = tgId === 5584466914;
+  const stageOpen = isAdmin && (votingOpen ? votingOpen[stage as keyof VotingStatusDto] ?? false : true);
 
   const canSubmitVoter =
     voterFirstName.trim().length > 0 &&
