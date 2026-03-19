@@ -3,7 +3,7 @@ import os
 
 load_dotenv()
 
-APP_VERSION = "3"
+APP_VERSION = "4"
 
 TG_TOKEN = os.getenv("TG_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "5584466914"))
