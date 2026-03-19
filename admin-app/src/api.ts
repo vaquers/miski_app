@@ -66,9 +66,9 @@ export async function getMisses(): Promise<MissInfo[]> {
 }
 
 export async function getResults(): Promise<unknown> {
-  return publicFetch('/api/results');
+  return authFetch('/api/admin/results');
 }
 
 export async function getVoters(): Promise<unknown> {
-  return publicFetch('/api/voters');
+  return authFetch('/api/admin/voters');
 }
