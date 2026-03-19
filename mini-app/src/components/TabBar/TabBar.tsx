@@ -28,13 +28,14 @@ export const TabBar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const tabs = TABS;
+  const tabs = TABS.filter((t) => t.id !== 'voting');
 
   const activeIndex = useMemo(() => {
     const idx = tabs.findIndex((t) => t.path === location.pathname);
     return idx >= 0 ? idx : 0;
   }, [location.pathname, tabs]);
 
+  if (tabs.length <= 1) return null;
   if (location.pathname.startsWith('/miss')) return null;
 
   return (
