@@ -1,29 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  /** When true, only set src when element is in view (Intersection Observer). */
   useIntersection?: boolean;
-  /** Root margin for intersection (e.g. "200px" to load a bit before visible). */
   rootMargin?: string;
 }
 
-/**
- * Image that only loads when in viewport (for gallery grids).
- * Uses native loading="lazy" + optional Intersection Observer to set src only when visible,
- * reducing concurrent requests and speeding up first paint.
- */
 export const LazyImage: React.FC<LazyImageProps> = ({
   src,
   useIntersection = true,
-  rootMargin = '200px',
+  rootMargin = '300px',
   loading = 'lazy',
   decoding = 'async',
   alt = '',
   className = '',
+  style,
   ...rest
 }) => {
   const [inView, setInView] = useState(!useIntersection);
-  const [imgSrc, setImgSrc] = useState<string | undefined>(useIntersection ? undefined : src);
+  const [loaded, setLoaded] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,16 +29,30 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       (entries) => {
         if (entries[0]?.isIntersecting) {
           setInView(true);
-          setImgSrc(src);
+          observer.disconnect();
         }
       },
-      { rootMargin, threshold: 0.01 }
+      { rootMargin, threshold: 0.01 },
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, [useIntersection, src, rootMargin, inView]);
 
-  if (useIntersection && !inView) {
+  const skeleton = (
+    <div
+      className="lazy-image-skeleton"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(255, 255, 255, 0.06)',
+        animation: 'lazyImagePulse 1.5s ease-in-out infinite',
+        borderRadius: 'inherit',
+      }}
+      aria-hidden
+    />
+  );
+
+  if (!inView) {
     return (
       <div
         ref={ref}
@@ -52,22 +60,33 @@ export const LazyImage: React.FC<LazyImageProps> = ({
         style={{
           width: '100%',
           height: '100%',
-          background: 'rgba(255, 255, 255, 0.06)',
-          display: 'block',
+          position: 'relative',
+          overflow: 'hidden',
+          ...style,
         }}
         aria-hidden
-      />
+      >
+        {skeleton}
+      </div>
     );
   }
 
   return (
-    <img
-      src={imgSrc}
-      alt={alt}
-      className={className}
-      loading={loading}
-      decoding={decoding}
-      {...rest}
-    />
+    <div style={{ position: 'relative', width: '100%', height: '100%', ...style }}>
+      {!loaded && skeleton}
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        loading={loading}
+        decoding={decoding}
+        onLoad={() => setLoaded(true)}
+        style={{
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+        }}
+        {...rest}
+      />
+    </div>
   );
 };

@@ -3,10 +3,11 @@ import os
 
 load_dotenv()
 
+APP_VERSION = "3"
+
 TG_TOKEN = os.getenv("TG_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "5584466914"))
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://turritopsis-dohrnii.duckdns.org")
-# На Railway приложение получает порт из переменной окружения PORT.
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://miski-rho.vercel.app")
 API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", "8080")))
 
 MISSES = [

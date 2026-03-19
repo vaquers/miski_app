@@ -7,8 +7,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px 48px 16px;
-  padding-bottom: calc(16px + var(--safe-bottom));
+  padding: 12px 48px calc(var(--safe-bottom, 0px) + 12px);
   pointer-events: none;
 }
 
@@ -16,8 +15,8 @@
   pointer-events: auto;
   position: relative;
   flex: 1;
-  max-width: 209px;
-  height: 62px;
+  max-width: 220px;
+  height: var(--tabbar-height, 62px);
   background: rgba(33, 33, 33, 0.6);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
