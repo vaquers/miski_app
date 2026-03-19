@@ -6,7 +6,7 @@ import { misses } from '@/data/misses';
 import Galaxy from '@/components/Galaxy/Galaxy';
 import { Footer } from '@/components/Footer/Footer';
 import crownImg from '../../assets/miski_main/crown.png';
-import { getParticipants, vote, type VotingNomination } from '@/api/votingApi';
+import { getParticipants, vote, getVotingStatus, type VotingNomination, type VotingStatusDto } from '@/api/votingApi';
 
 import './VotingScreen.css';
 
@@ -117,9 +117,20 @@ export const VotingScreen: React.FC = () => {
   const [remoteParticipants, setRemoteParticipants] = useState<
     { id: number; localId?: string; name: string; image: string }[] | null
   >(null);
+  const [votingOpen, setVotingOpen] = useState<VotingStatusDto | null>(null);
 
   const participants = remoteParticipants ?? localParticipants;
   const currentParticipant = participants[selectedIndex] ?? participants[0];
+
+  useEffect(() => {
+    let alive = true;
+    const poll = () => {
+      getVotingStatus().then((s) => { if (alive) setVotingOpen(s); }).catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, 10_000);
+    return () => { alive = false; clearInterval(timer); };
+  }, []);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -213,6 +224,7 @@ export const VotingScreen: React.FC = () => {
   }, [isAnimatingVote, pendingStage]);
 
   const isPhotosStage = stage === 'photos';
+  const stageOpen = votingOpen ? votingOpen[stage as keyof VotingStatusDto] ?? false : true;
 
   const canSubmitVoter =
     voterFirstName.trim().length > 0 &&
@@ -304,7 +316,18 @@ export const VotingScreen: React.FC = () => {
         </div>
       )}
 
-      {!isSuccess && voter && (
+      {!isSuccess && voter && !stageOpen && (
+        <div className="voting-success">
+          <h1 className="voting-success-title">Голосование закрыто</h1>
+          <p className="voting-success-subtitle">
+            {stage === 'defile'
+              ? 'Голосование за дефиле ещё не открыто.'
+              : 'Голосование за фотосессию ещё не открыто.'}
+          </p>
+        </div>
+      )}
+
+      {!isSuccess && voter && stageOpen && (
         <div className="voting-main">
           <header className="voting-header">
             <p className="voting-title-line-1">

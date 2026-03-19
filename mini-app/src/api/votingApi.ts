@@ -1,4 +1,4 @@
-import { requestJsonWithApiFallback } from './apiBase';
+import { requestJsonWithApiFallback, cachedGet } from './apiBase';
 
 export type ParticipantDto = {
   id: number;
@@ -50,4 +50,10 @@ export async function getResults(signal?: AbortSignal): Promise<unknown> {
 
 export async function getVoters(signal?: AbortSignal): Promise<unknown> {
   return await requestJsonWithApiFallback('/voters', { signal });
+}
+
+export type VotingStatusDto = { defile: boolean; photos: boolean };
+
+export async function getVotingStatus(signal?: AbortSignal): Promise<VotingStatusDto> {
+  return await cachedGet<VotingStatusDto>('/voting-status', { signal, cacheTtl: 5_000 });
 }

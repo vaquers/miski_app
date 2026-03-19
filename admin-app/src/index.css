@@ -1,0 +1,359 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0e0e14;
+  --surface: #16161e;
+  --surface-2: #1e1e28;
+  --border: rgba(255, 255, 255, 0.06);
+  --text: rgba(255, 255, 255, 0.92);
+  --text-2: rgba(255, 255, 255, 0.5);
+  --accent: #ddfd4e;
+  --accent-dim: rgba(221, 253, 78, 0.15);
+  --red: #ff6b6b;
+  --red-dim: rgba(255, 107, 107, 0.15);
+  --green: #6bffb8;
+  --green-dim: rgba(107, 255, 184, 0.12);
+  --radius: 14px;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100%;
+}
+
+/* ─── Login ─── */
+
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at top, #14142a 0%, var(--bg) 70%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+.login-card h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.login-sub {
+  color: var(--text-2);
+  font-size: 14px;
+  margin-top: -8px;
+}
+
+.login-card input {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0 16px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.login-card input:focus {
+  border-color: var(--accent);
+}
+
+.login-card button {
+  height: 48px;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent);
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.login-card button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.login-card button:not(:disabled):active {
+  opacity: 0.85;
+}
+
+.login-err {
+  color: var(--red);
+  font-size: 14px;
+}
+
+/* ─── Dashboard ─── */
+
+.dashboard {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.dash-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.dash-time {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.btn-logout {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-logout:hover {
+  color: var(--red);
+}
+
+.dash-error {
+  background: var(--red-dim);
+  color: var(--red);
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+/* ─── Card ─── */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.card h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+/* ─── Voting controls ─── */
+
+.voting-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border-radius: 12px;
+}
+
+.control-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.toggle {
+  min-width: 100px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle.on {
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid rgba(107, 255, 184, 0.2);
+}
+
+.toggle.off {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid rgba(255, 107, 107, 0.15);
+}
+
+.toggle:active {
+  transform: scale(0.97);
+}
+
+/* ─── Results table ─── */
+
+.results-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rt-header {
+  display: grid;
+  grid-template-columns: 1fr 60px 60px 60px;
+  padding: 8px 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+}
+
+.rt-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 60px 60px 60px;
+  padding: 12px 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.rt-name {
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 1;
+}
+
+.rt-num {
+  font-size: 14px;
+  text-align: center;
+  z-index: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.rt-total {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.rt-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--accent-dim);
+  border-radius: 10px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+/* ─── Voters list ─── */
+
+.voters-list {
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.voter-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+.voter-name {
+  font-weight: 500;
+}
+
+.voter-class {
+  color: var(--text-2);
+}
+
+.voter-nom {
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.empty {
+  color: var(--text-2);
+  font-size: 14px;
+  text-align: center;
+  padding: 24px;
+}
+
+/* ─── Scrollbar ─── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
