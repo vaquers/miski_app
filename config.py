@@ -11,7 +11,7 @@ WEBAPP_URL = os.getenv("WEBAPP_URL", "https://miski-rho.vercel.app")
 API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", "8080")))
 
 MISSES = [
-    {"id": "alina", "name": "Катерина Василевская"},
+    {"id": "alina", "name": "Алина Василевская"},
     {"id": "nastya", "name": "Настя Коновалова"},
     {"id": "ksyusha", "name": "Ксюша Антонова"},
     {"id": "emiliya", "name": "Эмилия Сидоренко"},

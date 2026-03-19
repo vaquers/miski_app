@@ -52,7 +52,7 @@ export function getGallery(folderName: string): string[] {
 }
 
 const GALLERY_FOLDER_MAP: Record<string, string> = {
-  alina: 'Катерина',
+  alina: 'Алина',
   nastya: 'Настя',
   ksyusha: 'Ксюша',
   emiliya: 'Эмилия',
@@ -72,7 +72,7 @@ export const misses: Miss[] = [
   {
     id: 'alina',
     order: 1,
-    firstName: 'Катерина',
+    firstName: 'Алина',
     lastName: 'Василевская',
     username: '@allliiiinnnaaa',
     className: '10 ГУМ',
