@@ -3,26 +3,21 @@
   --text-primary: rgba(255, 255, 255, 0.92);
   --text-secondary: rgba(255, 255, 255, 0.45);
 
-  --tg-safe-area-inset-top: env(safe-area-inset-top, 0px);
-  --tg-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-  --tg-safe-area-inset-left: env(safe-area-inset-left, 0px);
-  --tg-safe-area-inset-right: env(safe-area-inset-right, 0px);
-
   --safe-top: calc(
-    var(--tg-content-safe-area-inset-top, 0px) +
-    var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px))
+    var(--tg-viewport-content-safe-area-inset-top, 0px) +
+    var(--tg-viewport-safe-area-inset-top, env(safe-area-inset-top, 0px))
   );
   --safe-bottom: calc(
-    var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) +
-    var(--tg-content-safe-area-inset-bottom, 0px)
+    var(--tg-viewport-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)) +
+    var(--tg-viewport-content-safe-area-inset-bottom, 0px)
   );
   --safe-left: calc(
-    var(--tg-safe-area-inset-left, 0px) +
-    var(--tg-content-safe-area-inset-left, 0px)
+    var(--tg-viewport-safe-area-inset-left, env(safe-area-inset-left, 0px)) +
+    var(--tg-viewport-content-safe-area-inset-left, 0px)
   );
   --safe-right: calc(
-    var(--tg-safe-area-inset-right, 0px) +
-    var(--tg-content-safe-area-inset-right, 0px)
+    var(--tg-viewport-safe-area-inset-right, env(safe-area-inset-right, 0px)) +
+    var(--tg-viewport-content-safe-area-inset-right, 0px)
   );
 
   --tabbar-height: 62px;
