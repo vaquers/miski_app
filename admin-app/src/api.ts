@@ -26,6 +26,14 @@ async function authFetch(path: string, init?: RequestInit) {
   return res.json();
 }
 
+async function publicFetch<T = unknown>(path: string): Promise<T> {
+  const res = await fetch(`${API}${path}`, {
+    headers: { accept: 'application/json' },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 export async function login(password: string) {
   const data = await authFetch('/api/admin/login', {
     method: 'POST',
@@ -58,9 +66,9 @@ export async function getMisses(): Promise<MissInfo[]> {
 }
 
 export async function getResults(): Promise<unknown> {
-  return authFetch('/api/admin/results');
+  return publicFetch('/api/results');
 }
 
 export async function getVoters(): Promise<unknown> {
-  return authFetch('/api/admin/voters');
+  return publicFetch('/api/voters');
 }

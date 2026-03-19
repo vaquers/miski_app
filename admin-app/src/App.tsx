@@ -83,6 +83,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [misses, setMisses] = useState<MissInfo[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [error, setError] = useState('');
+  const [toggling, setToggling] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   const missNameMap = useCallback(
@@ -91,37 +92,36 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   );
 
   const fetchAll = useCallback(async () => {
-    try {
-      const [st, res, vt] = await Promise.all([
-        getVotingStatus(),
-        getResults(),
-        getVoters(),
-      ]);
-      setStatus(st);
-      setLastUpdate(new Date());
-      setError('');
+    const errors: string[] = [];
 
+    // Voting status (admin endpoint)
+    try {
+      const st = await getVotingStatus();
+      setStatus(st);
+    } catch (e: any) {
+      if (e.message === 'unauthorized') { onLogout(); return; }
+      errors.push('Статус голосования');
+    }
+
+    // Results (public endpoint)
+    try {
+      const res = await getResults();
       const resultArr = Array.isArray(res) ? res : [];
       const nameMap = missNameMap();
 
       const byParticipant = new Map<number, VoteRow>();
       for (const r of resultArr) {
         const pid = r.participant_id ?? r.id;
-        const existing = byParticipant.get(pid);
         const name =
           r.name || r.firstName || nameMap.get(String(pid)) || `#${pid}`;
 
-        if (!existing) {
+        if (!byParticipant.has(pid)) {
           byParticipant.set(pid, {
-            participant_id: pid,
-            name,
-            defile: 0,
-            photos: 0,
-            total: 0,
+            participant_id: pid, name, defile: 0, photos: 0, total: 0,
           });
         }
         const row = byParticipant.get(pid)!;
-        if (!row.name || row.name.startsWith('#')) row.name = name;
+        if (row.name.startsWith('#')) row.name = name;
 
         const count = r.votes ?? r.count ?? 1;
         const nomination = r.nomination ?? r.stage ?? r.category ?? '';
@@ -134,18 +134,21 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         row.total = row.defile + row.photos + row.total;
       }
 
-      setVotes(
-        [...byParticipant.values()].sort((a, b) => b.total - a.total),
-      );
-
-      setVoters(Array.isArray(vt) ? (vt as Voter[]) : []);
-    } catch (e: any) {
-      if (e.message === 'unauthorized') {
-        onLogout();
-        return;
-      }
-      setError(e.message || 'Ошибка загрузки');
+      setVotes([...byParticipant.values()].sort((a, b) => b.total - a.total));
+    } catch {
+      errors.push('Результаты');
     }
+
+    // Voters (public endpoint)
+    try {
+      const vt = await getVoters();
+      setVoters(Array.isArray(vt) ? (vt as Voter[]) : []);
+    } catch {
+      errors.push('Голоса');
+    }
+
+    setLastUpdate(new Date());
+    setError(errors.length ? `Не удалось загрузить: ${errors.join(', ')}` : '');
   }, [missNameMap, onLogout]);
 
   useEffect(() => {
@@ -159,12 +162,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   }, [fetchAll]);
 
   const toggleVoting = async (nomination: 'defile' | 'photos') => {
-    if (!status) return;
+    if (!status || toggling) return;
+    setToggling(nomination);
     try {
       const updated = await setVotingStatus(nomination, !status[nomination]);
       setStatus(updated);
     } catch (e: any) {
       if (e.message === 'unauthorized') onLogout();
+    } finally {
+      setToggling(null);
     }
   };
 
@@ -192,25 +198,32 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       {/* Voting controls */}
       <section className="card">
         <h2>Управление голосованием</h2>
+        <p className="card-hint">
+          Нажмите на кнопку, чтобы открыть или закрыть голосование.
+        </p>
         <div className="voting-controls">
-          <div className="control-row">
-            <span className="control-label">Дефиле</span>
-            <button
-              className={`toggle ${status?.defile ? 'on' : 'off'}`}
-              onClick={() => toggleVoting('defile')}
-            >
-              {status?.defile ? 'Открыто' : 'Закрыто'}
-            </button>
-          </div>
-          <div className="control-row">
-            <span className="control-label">Фотосессия</span>
-            <button
-              className={`toggle ${status?.photos ? 'on' : 'off'}`}
-              onClick={() => toggleVoting('photos')}
-            >
-              {status?.photos ? 'Открыто' : 'Закрыто'}
-            </button>
-          </div>
+          {(['defile', 'photos'] as const).map((nom) => {
+            const isOpen = status?.[nom] ?? false;
+            const label = nom === 'defile' ? 'Дефиле' : 'Фотосессия';
+            const loading = toggling === nom;
+            return (
+              <div className="control-row" key={nom}>
+                <div className="control-info">
+                  <span className="control-label">{label}</span>
+                  <span className={`control-status ${isOpen ? 'open' : 'closed'}`}>
+                    {isOpen ? '● Открыто' : '○ Закрыто'}
+                  </span>
+                </div>
+                <button
+                  className={`toggle-btn ${isOpen ? 'toggle-close' : 'toggle-open'}`}
+                  onClick={() => toggleVoting(nom)}
+                  disabled={loading}
+                >
+                  {loading ? '...' : isOpen ? 'Закрыть' : 'Открыть'}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
 
