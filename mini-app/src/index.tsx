@@ -10,7 +10,9 @@ import { init } from '@/init.ts';
 
 import './index.css';
 
-import './mockEnv.ts';
+if (import.meta.env.DEV) {
+  await import('./mockEnv.ts');
+}
 
 // Build fingerprint — always log, never strip
 const BUILD_INFO = {
