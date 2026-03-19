@@ -1,9 +1,7 @@
 import { requestJsonWithApiFallback } from './apiBase';
 
-export type VotingNomination = 'defile' | 'photos';
-
 export type ParticipantDto = {
-  id: string;
+  id: number;
   firstName?: string;
   lastName?: string;
   name?: string;
@@ -13,14 +11,10 @@ export type ParticipantDto = {
 
 export type VoteRequest = {
   tg_id: number;
-  participant_id: string;
-  nomination: VotingNomination;
-  voter?: {
-    firstName: string;
-    lastName: string;
-    profile: string;
-    parallel?: '10' | '11' | null;
-  };
+  first_name: string;
+  last_name: string;
+  voter_class: string;
+  participant_id: number;
 };
 
 export async function getParticipants(signal?: AbortSignal): Promise<ParticipantDto[]> {
@@ -32,26 +26,15 @@ export async function hasVoted(tgId: number, signal?: AbortSignal): Promise<unkn
 }
 
 export async function vote(req: VoteRequest): Promise<unknown> {
-  const payload = {
-    tg_id: req.tg_id,
-    tgId: req.tg_id,
-    participant_id: req.participant_id,
-    participantId: req.participant_id,
-    nomination: req.nomination,
-    stage: req.nomination,
-    category: req.nomination,
-    voter: req.voter,
-    firstName: req.voter?.firstName,
-    lastName: req.voter?.lastName,
-    profile: req.voter?.profile,
-    parallel: req.voter?.parallel ?? undefined,
-    first_name: req.voter?.firstName,
-    last_name: req.voter?.lastName,
-  };
-
   return await requestJsonWithApiFallback('/vote', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      tg_id: req.tg_id,
+      first_name: req.first_name,
+      last_name: req.last_name,
+      voter_class: req.voter_class,
+      participant_id: req.participant_id,
+    }),
   });
 }
 

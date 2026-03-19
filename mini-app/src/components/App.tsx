@@ -23,17 +23,6 @@ const VotingScreen = lazy(() =>
   import('@/screens/VotingScreen').then((m) => ({ default: m.VotingScreen })),
 );
 
-const VotingDisabled = () => (
-  <div style={{
-    padding: 24,
-    color: 'rgba(255, 255, 255, 0.92)',
-    textAlign: 'center',
-    fontSize: 18,
-  }}>
-    Голосование временно недоступно. Скоро обновим.
-  </div>
-);
-
 function ScreenFallback() {
   return (
     <div style={{
@@ -130,7 +119,7 @@ function AppContent() {
     navigate(`/?miss=${encodeURIComponent(startParam)}`, { replace: true });
   }, [lp.tgWebAppStartParam, navigate, location.pathname, location.search]);
 
-  const VotingComponent = import.meta.env.PROD ? VotingDisabled : VotingScreen;
+  const VotingComponent = VotingScreen;
 
   return (
     <>

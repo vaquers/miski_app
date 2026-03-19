@@ -1,12 +1,7 @@
-const PROD_API_BASE = 'https://miskiapp-production.up.railway.app';
-
 function getApiBaseUrl(): string {
-  if (!import.meta.env.PROD) {
-    if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-    return '';
-  }
-  return PROD_API_BASE;
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  return '';
 }
 
 const DEFAULT_TIMEOUT_MS = 10_000;

@@ -1,38 +1,18 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { initData } from '@tma.js/sdk-react';
 
 import { misses } from '@/data/misses';
 import Galaxy from '@/components/Galaxy/Galaxy';
 import { Footer } from '@/components/Footer/Footer';
 import crownImg from '../../assets/miski_main/crown.png';
-import { getParticipants, vote, type VotingNomination } from '@/api/votingApi';
+import { getParticipants, vote } from '@/api/votingApi';
 
 import './VotingScreen.css';
-
-type VotingStage = 'defile' | 'photos' | 'success';
-
-type VoterProfile =
-  | 'гость'
-  | 'выпускник'
-  | 'ГУМ'
-  | 'ФИЛ'
-  | 'Ф'
-  | 'М'
-  | 'ИФ'
-  | 'ИМ'
-  | 'ХИМ'
-  | 'БИО-1'
-  | 'БИО-2'
-  | 'ИСТ'
-  | 'ОБЩ'
-  | 'ЭГ';
 
 type VoterInfo = {
   firstName: string;
   lastName: string;
-  profile: VoterProfile;
-  parallel: '10' | '11' | null;
+  voterClass: string;
 };
 
 const VOTER_STORAGE_KEY = 'miski:voting:voter';
@@ -42,15 +22,11 @@ function loadVoter(): VoterInfo | null {
     const raw = localStorage.getItem(VOTER_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<VoterInfo>;
-    if (!parsed.firstName || !parsed.lastName || !parsed.profile) return null;
+    if (!parsed.firstName || !parsed.lastName || !parsed.voterClass) return null;
     return {
       firstName: String(parsed.firstName).trim(),
       lastName: String(parsed.lastName).trim(),
-      profile: parsed.profile as VoterProfile,
-      parallel:
-        parsed.parallel === '10' || parsed.parallel === '11'
-          ? parsed.parallel
-          : null,
+      voterClass: String(parsed.voterClass).trim(),
     };
   } catch {
     localStorage.removeItem(VOTER_STORAGE_KEY);
@@ -73,42 +49,7 @@ const AVATAR_RADIUS_Y = AVATAR_RADIUS_X;
 
 const AVATAR_ANGLES_DEG = [-90, -45, 0, 45, 90, 135, 180, 225] as const;
 
-const VOTING_STAGES: Record<
-  Exclude<VotingStage, 'success'>,
-  { id: VotingStage; line1: string; line2: string }
-> = {
-  defile: {
-    id: 'defile',
-    line1: 'Какая мисска',
-    line2: 'тебе больше всего понравилась?',
-  },
-  photos: {
-    id: 'photos',
-    line1: 'У кого была',
-    line2: 'лучшая фотосессия?',
-  },
-};
-
-const PROFILE_OPTIONS = [
-  'гость',
-  'выпускник',
-  'ГУМ',
-  'ФИЛ',
-  'Ф',
-  'М',
-  'ИФ',
-  'ИМ',
-  'ХИМ',
-  'БИО-1',
-  'БИО-2',
-  'ИСТ',
-  'ОБЩ',
-  'ЭГ',
-] as const;
-
 export const VotingScreen: React.FC = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const galaxy = useMemo(
     () => (
@@ -137,18 +78,14 @@ export const VotingScreen: React.FC = () => {
     () =>
       [...misses]
         .sort((a, b) => a.order - b.order)
-        .map((miss) => ({
-          id: miss.id,
+        .map((miss, index) => ({
+          id: index + 1,
+          localId: miss.id,
           name: `${miss.firstName} ${miss.lastName}`.trim(),
           image: miss.previewImage,
         })),
     [],
   );
-
-  const initialStage = useMemo<VotingStage>(() => {
-    const s = searchParams.get('stage');
-    return s === 'photos' ? 'photos' : 'defile';
-  }, [searchParams]);
 
   const tgId = useMemo(() => {
     try {
@@ -159,52 +96,47 @@ export const VotingScreen: React.FC = () => {
     }
   }, []);
 
-  const [stage, setStage] = useState<VotingStage>(initialStage);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [flyingIndex, setFlyingIndex] = useState<number | null>(null);
-  const [pendingStage, setPendingStage] = useState<VotingStage | null>(null);
   const [isAnimatingVote, setIsAnimatingVote] = useState(false);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [voter, setVoter] = useState<VoterInfo | null>(() => loadVoter());
   const [voterFirstName, setVoterFirstName] = useState('');
   const [voterLastName, setVoterLastName] = useState('');
-  const [voterProfile, setVoterProfile] = useState<VoterProfile | ''>('');
-  const [voterParallel, setVoterParallel] = useState<'10' | '11' | ''>('');
+  const [voterClass, setVoterClass] = useState('');
   const [remoteParticipants, setRemoteParticipants] = useState<
-    { id: string; name: string; image: string }[] | null
+    { id: number; localId?: string; name: string; image: string }[] | null
   >(null);
 
   const participants = remoteParticipants ?? localParticipants;
   const currentParticipant = participants[selectedIndex] ?? participants[0];
 
   useEffect(() => {
-    setStage(initialStage);
-    setSelectedIndex(0);
-  }, [initialStage]);
-
-  useEffect(() => {
     const ctrl = new AbortController();
     getParticipants(ctrl.signal)
       .then((list) => {
         if (ctrl.signal.aborted) return;
-        const byId = new Map(localParticipants.map((p) => [p.id, p]));
+        const localById = new Map(localParticipants.map((p) => [p.localId, p]));
         const merged = (Array.isArray(list) ? list : [])
           .map((p) => {
-            const id = String((p as any).id ?? '');
+            const id = Number((p as any).id ?? 0);
             if (!id) return null;
-            const local = byId.get(id);
             const name =
               (p as any).name ||
-              `${(p as any).firstName ?? ''} ${(p as any).lastName ?? ''}`.trim() ||
-              local?.name ||
-              id;
+              `${(p as any).firstName ?? (p as any).first_name ?? ''} ${(p as any).lastName ?? (p as any).last_name ?? ''}`.trim() ||
+              String(id);
+            const localMatch = [...localById.values()].find(
+              (lp) => lp.name.toLowerCase() === name.toLowerCase(),
+            );
             return {
               id,
+              localId: localMatch?.localId,
               name,
-              image: (p as any).previewImage || local?.image || '',
+              image: (p as any).previewImage || (p as any).preview_image || localMatch?.image || '',
             };
           })
-          .filter(Boolean) as { id: string; name: string; image: string }[];
+          .filter(Boolean) as { id: number; localId?: string; name: string; image: string }[];
 
         if (merged.length) setRemoteParticipants(merged);
       })
@@ -216,7 +148,7 @@ export const VotingScreen: React.FC = () => {
   }, [localParticipants]);
 
   const handleVote = useCallback(() => {
-    if (isAnimatingVote || !participants.length) return;
+    if (isAnimatingVote || !participants.length || !voter) return;
     setVoteError(null);
 
     if (!tgId) {
@@ -227,78 +159,47 @@ export const VotingScreen: React.FC = () => {
     const target = currentParticipant;
     if (!target) return;
 
-    const nextStage: VotingStage | null =
-      stage === 'defile' ? 'photos' : stage === 'photos' ? 'success' : null;
-
-    if (!nextStage) return;
-
     setIsAnimatingVote(true);
     setFlyingIndex(selectedIndex);
-    setPendingStage(nextStage);
 
-    const nomination: VotingNomination =
-      stage === 'photos' ? 'photos' : 'defile';
     vote({
       tg_id: tgId,
+      first_name: voter.firstName,
+      last_name: voter.lastName,
+      voter_class: voter.voterClass,
       participant_id: target.id,
-      nomination,
-      voter: voter
-        ? {
-            firstName: voter.firstName,
-            lastName: voter.lastName,
-            profile: voter.profile,
-            parallel: voter.parallel,
-          }
-        : undefined,
-    }).catch((e) => {
-      setVoteError(
-        e instanceof Error ? e.message : 'Не удалось отправить голос. Попробуй ещё раз.',
-      );
-      setPendingStage(null);
-      setFlyingIndex(null);
-      setIsAnimatingVote(false);
-    });
-  }, [isAnimatingVote, participants.length, tgId, currentParticipant, stage, selectedIndex, voter]);
-
-  useEffect(() => {
-    if (!isAnimatingVote || !pendingStage) return;
-
-    const timeout = window.setTimeout(() => {
-      setStage(pendingStage);
-      if (pendingStage !== 'success') {
-        setSelectedIndex(0);
-      }
-      setPendingStage(null);
-      setFlyingIndex(null);
-      setIsAnimatingVote(false);
-    }, 1850);
-
-    return () => window.clearTimeout(timeout);
-  }, [isAnimatingVote, pendingStage]);
-
-  const isSuccess = stage === 'success';
-  const isPhotosStage = stage === 'photos';
-
-  const isSchoolProfile =
-    voterProfile !== '' && voterProfile !== 'гость' && voterProfile !== 'выпускник';
+    })
+      .then(() => {
+        setTimeout(() => {
+          setIsSuccess(true);
+          setFlyingIndex(null);
+          setIsAnimatingVote(false);
+        }, 1850);
+      })
+      .catch((e) => {
+        setVoteError(
+          e instanceof Error ? e.message : 'Не удалось отправить голос. Попробуй ещё раз.',
+        );
+        setFlyingIndex(null);
+        setIsAnimatingVote(false);
+      });
+  }, [isAnimatingVote, participants.length, tgId, currentParticipant, selectedIndex, voter]);
 
   const canSubmitVoter =
     voterFirstName.trim().length > 0 &&
     voterLastName.trim().length > 0 &&
-    voterProfile !== '' &&
-    (!isSchoolProfile || voterParallel === '10' || voterParallel === '11');
+    voterClass.trim().length > 0;
 
   const handleSubmitVoter = useCallback(() => {
     if (!canSubmitVoter) return;
     const next: VoterInfo = {
       firstName: voterFirstName.trim(),
       lastName: voterLastName.trim(),
-      profile: voterProfile as VoterProfile,
-      parallel: isSchoolProfile ? (voterParallel as '10' | '11') : null,
+      voterClass: voterClass.trim(),
     };
     saveVoter(next);
     setVoter(next);
-  }, [canSubmitVoter, voterFirstName, voterLastName, voterProfile, isSchoolProfile, voterParallel]);
+  }, [canSubmitVoter, voterFirstName, voterLastName, voterClass]);
 
   if (!participants.length) {
     return (
@@ -345,58 +246,21 @@ export const VotingScreen: React.FC = () => {
                   className="voting-input"
                   value={voterLastName}
                   onChange={(e) => setVoterLastName(e.target.value)}
-                  placeholder="Иванов"
+                  placeholder="Петров"
                   autoComplete="family-name"
                 />
               </label>
 
               <label className="voting-field">
-                <span className="voting-field-label">Профиль</span>
-                <select
-                  className="voting-select"
-                  value={voterProfile}
-                  onChange={(e) => {
-                    const v = e.target.value as VoterProfile | '';
-                    setVoterProfile(v);
-                    setVoterParallel('');
-                  }}
-                >
-                  <option value="" disabled>
-                    Выбери…
-                  </option>
-                  {PROFILE_OPTIONS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
+                <span className="voting-field-label">Класс</span>
+                <input
+                  className="voting-input"
+                  value={voterClass}
+                  onChange={(e) => setVoterClass(e.target.value)}
+                  placeholder="10А"
+                  autoComplete="off"
+                />
               </label>
-
-              {isSchoolProfile && (
-                <label className="voting-field">
-                  <span className="voting-field-label">Параллель</span>
-                  <div className="voting-parallel">
-                    <button
-                      type="button"
-                      className={`voting-parallel-btn${
-                        voterParallel === '10' ? ' active' : ''
-                      }`}
-                      onClick={() => setVoterParallel('10')}
-                    >
-                      10
-                    </button>
-                    <button
-                      type="button"
-                      className={`voting-parallel-btn${
-                        voterParallel === '11' ? ' active' : ''
-                      }`}
-                      onClick={() => setVoterParallel('11')}
-                    >
-                      11
-                    </button>
-                  </div>
-                </label>
-              )}
             </div>
           </main>
 
@@ -416,11 +280,9 @@ export const VotingScreen: React.FC = () => {
       {!isSuccess && voter && (
         <div className="voting-main">
           <header className="voting-header">
-            <p className="voting-title-line-1">
-              {VOTING_STAGES[stage as Exclude<VotingStage, 'success'>]?.line1}
-            </p>
+            <p className="voting-title-line-1">Какая мисска</p>
             <p className="voting-title-line-2 voting-decorative">
-              {VOTING_STAGES[stage as Exclude<VotingStage, 'success'>]?.line2}
+              тебе больше всего понравилась?
             </p>
           </header>
 
@@ -489,20 +351,6 @@ export const VotingScreen: React.FC = () => {
           </main>
 
           <div className="voting-cta-wrap">
-            {isPhotosStage && (
-              <button
-                type="button"
-                className="voting-secondary-button"
-                onClick={() =>
-                  navigate(`/miss/${currentParticipant?.id}#gallery`, {
-                    state: { returnTo: '/voting?stage=photos' },
-                  })
-                }
-                disabled={isAnimatingVote}
-              >
-                Открыть фотосессию
-              </button>
-            )}
             <button
               type="button"
               className="voting-cta-button"
@@ -520,7 +368,7 @@ export const VotingScreen: React.FC = () => {
         <div className="voting-success">
           <h1 className="voting-success-title">Спасибо за голос!</h1>
           <p className="voting-success-subtitle">
-            Ваш выбор в обеих номинациях учтён.
+            Ваш выбор учтён.
           </p>
         </div>
       )}
