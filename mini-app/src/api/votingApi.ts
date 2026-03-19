@@ -9,12 +9,15 @@ export type ParticipantDto = {
   previewImage?: string;
 };
 
+export type VotingNomination = 'defile' | 'photos';
+
 export type VoteRequest = {
   tg_id: number;
   first_name: string;
   last_name: string;
   voter_class: string;
   participant_id: number;
+  nomination: VotingNomination;
 };
 
 export async function getParticipants(signal?: AbortSignal): Promise<ParticipantDto[]> {
@@ -34,6 +37,9 @@ export async function vote(req: VoteRequest): Promise<unknown> {
       last_name: req.last_name,
       voter_class: req.voter_class,
       participant_id: req.participant_id,
+      nomination: req.nomination,
+      stage: req.nomination,
+      category: req.nomination,
     }),
   });
 }

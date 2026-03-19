@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { initData } from '@tma.js/sdk-react';
 
 import { misses } from '@/data/misses';
 import Galaxy from '@/components/Galaxy/Galaxy';
 import { Footer } from '@/components/Footer/Footer';
 import crownImg from '../../assets/miski_main/crown.png';
-import { getParticipants, vote } from '@/api/votingApi';
+import { getParticipants, vote, type VotingNomination } from '@/api/votingApi';
 
 import './VotingScreen.css';
 
@@ -13,6 +14,13 @@ type VoterInfo = {
   firstName: string;
   lastName: string;
   voterClass: string;
+};
+
+type VotingStage = 'defile' | 'photos' | 'success';
+
+const VOTING_STAGES: Record<Exclude<VotingStage, 'success'>, { line1: string; line2: string }> = {
+  defile: { line1: 'Какая мисска', line2: 'тебе больше всего понравилась?' },
+  photos: { line1: 'Чья фотосессия', line2: 'понравилась больше?' },
 };
 
 const VOTER_STORAGE_KEY = 'miski:voting:voter';
@@ -37,9 +45,7 @@ function loadVoter(): VoterInfo | null {
 function saveVoter(voter: VoterInfo) {
   try {
     localStorage.setItem(VOTER_STORAGE_KEY, JSON.stringify(voter));
-  } catch {
-    // Storage full or unavailable — non-critical
-  }
+  } catch {}
 }
 
 const AVATAR_CENTER_X = 50;
@@ -50,6 +56,7 @@ const AVATAR_RADIUS_Y = AVATAR_RADIUS_X;
 const AVATAR_ANGLES_DEG = [-90, -45, 0, 45, 90, 135, 180, 225] as const;
 
 export const VotingScreen: React.FC = () => {
+  const navigate = useNavigate();
 
   const galaxy = useMemo(
     () => (
@@ -96,10 +103,12 @@ export const VotingScreen: React.FC = () => {
     }
   }, []);
 
+  const [stage, setStage] = useState<VotingStage>('defile');
   const [isSuccess, setIsSuccess] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [flyingIndex, setFlyingIndex] = useState<number | null>(null);
   const [isAnimatingVote, setIsAnimatingVote] = useState(false);
+  const [pendingStage, setPendingStage] = useState<VotingStage | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [voter, setVoter] = useState<VoterInfo | null>(() => loadVoter());
   const [voterFirstName, setVoterFirstName] = useState('');
@@ -117,7 +126,9 @@ export const VotingScreen: React.FC = () => {
     getParticipants(ctrl.signal)
       .then((list) => {
         if (ctrl.signal.aborted) return;
-        const localById = new Map(localParticipants.map((p) => [p.localId, p]));
+        const localByName = new Map(
+          localParticipants.map((p) => [p.name.toLowerCase(), p]),
+        );
         const merged = (Array.isArray(list) ? list : [])
           .map((p) => {
             const id = Number((p as any).id ?? 0);
@@ -126,23 +137,19 @@ export const VotingScreen: React.FC = () => {
               (p as any).name ||
               `${(p as any).firstName ?? (p as any).first_name ?? ''} ${(p as any).lastName ?? (p as any).last_name ?? ''}`.trim() ||
               String(id);
-            const localMatch = [...localById.values()].find(
-              (lp) => lp.name.toLowerCase() === name.toLowerCase(),
-            );
+            const localMatch = localByName.get(name.toLowerCase());
             return {
               id,
               localId: localMatch?.localId,
               name,
-              image: (p as any).previewImage || (p as any).preview_image || localMatch?.image || '',
+              image: localMatch?.image || (p as any).previewImage || (p as any).preview_image || '',
             };
           })
           .filter(Boolean) as { id: number; localId?: string; name: string; image: string }[];
 
         if (merged.length) setRemoteParticipants(merged);
       })
-      .catch(() => {
-        // API unavailable — use local data
-      });
+      .catch(() => {});
 
     return () => ctrl.abort();
   }, [localParticipants]);
@@ -159,8 +166,16 @@ export const VotingScreen: React.FC = () => {
     const target = currentParticipant;
     if (!target) return;
 
+    const nextStage: VotingStage | null =
+      stage === 'defile' ? 'photos' : stage === 'photos' ? 'success' : null;
+
+    if (!nextStage) return;
+
     setIsAnimatingVote(true);
     setFlyingIndex(selectedIndex);
+    setPendingStage(nextStage);
+
+    const nomination: VotingNomination = stage === 'photos' ? 'photos' : 'defile';
 
     vote({
       tg_id: tgId,
@@ -168,22 +183,36 @@ export const VotingScreen: React.FC = () => {
       last_name: voter.lastName,
       voter_class: voter.voterClass,
       participant_id: target.id,
-    })
-      .then(() => {
-        setTimeout(() => {
-          setIsSuccess(true);
-          setFlyingIndex(null);
-          setIsAnimatingVote(false);
-        }, 1850);
-      })
-      .catch((e) => {
-        setVoteError(
-          e instanceof Error ? e.message : 'Не удалось отправить голос. Попробуй ещё раз.',
-        );
-        setFlyingIndex(null);
-        setIsAnimatingVote(false);
-      });
-  }, [isAnimatingVote, participants.length, tgId, currentParticipant, selectedIndex, voter]);
+      nomination,
+    }).catch((e) => {
+      setVoteError(
+        e instanceof Error ? e.message : 'Не удалось отправить голос. Попробуй ещё раз.',
+      );
+      setPendingStage(null);
+      setFlyingIndex(null);
+      setIsAnimatingVote(false);
+    });
+  }, [isAnimatingVote, participants.length, tgId, currentParticipant, selectedIndex, voter, stage]);
+
+  useEffect(() => {
+    if (!isAnimatingVote || !pendingStage) return;
+
+    const timeout = window.setTimeout(() => {
+      setStage(pendingStage);
+      if (pendingStage === 'success') {
+        setIsSuccess(true);
+      } else {
+        setSelectedIndex(0);
+      }
+      setPendingStage(null);
+      setFlyingIndex(null);
+      setIsAnimatingVote(false);
+    }, 1850);
+
+    return () => window.clearTimeout(timeout);
+  }, [isAnimatingVote, pendingStage]);
+
+  const isPhotosStage = stage === 'photos';
 
   const canSubmitVoter =
     voterFirstName.trim().length > 0 &&
@@ -214,9 +243,7 @@ export const VotingScreen: React.FC = () => {
 
   return (
     <div className="voting-screen">
-      <div className="voting-galaxy-bg">
-        {galaxy}
-      </div>
+      <div className="voting-galaxy-bg">{galaxy}</div>
 
       {!voter && (
         <div className="voting-main">
@@ -280,68 +307,70 @@ export const VotingScreen: React.FC = () => {
       {!isSuccess && voter && (
         <div className="voting-main">
           <header className="voting-header">
-            <p className="voting-title-line-1">Какая мисска</p>
+            <p className="voting-title-line-1">
+              {VOTING_STAGES[stage as keyof typeof VOTING_STAGES]?.line1}
+            </p>
             <p className="voting-title-line-2 voting-decorative">
-              тебе больше всего понравилась?
+              {VOTING_STAGES[stage as keyof typeof VOTING_STAGES]?.line2}
             </p>
           </header>
 
           <main className="voting-body" aria-label="Выбор участницы">
             <div className="voting-grid-wrap">
               <div className="voting-grid">
-              <div
-                className={`voting-grid-center${
-                  isAnimatingVote ? ' voting-grid-center--receive' : ''
-                }`}
-              >
-                <img
-                  src={crownImg}
-                  alt="Корона"
-                  className="voting-grid-center-image"
-                />
-              </div>
-              {participants.map((participant, index) => {
-                const isActive = index === selectedIndex;
-                const isFlying = flyingIndex === index;
-                const angleDeg = AVATAR_ANGLES_DEG[index % AVATAR_ANGLES_DEG.length];
-                const angleRad = (angleDeg * Math.PI) / 180;
-                const left = AVATAR_CENTER_X + AVATAR_RADIUS_X * Math.cos(angleRad);
-                const top = AVATAR_CENTER_Y + AVATAR_RADIUS_Y * Math.sin(angleRad);
-                const position = {
-                  left: `${left}%`,
-                  top: `${top}%`,
-                };
+                <div
+                  className={`voting-grid-center${
+                    isAnimatingVote ? ' voting-grid-center--receive' : ''
+                  }`}
+                >
+                  <img
+                    src={crownImg}
+                    alt="Корона"
+                    className="voting-grid-center-image"
+                  />
+                </div>
+                {participants.map((participant, index) => {
+                  const isActive = index === selectedIndex;
+                  const isFlying = flyingIndex === index;
+                  const angleDeg = AVATAR_ANGLES_DEG[index % AVATAR_ANGLES_DEG.length];
+                  const angleRad = (angleDeg * Math.PI) / 180;
+                  const left = AVATAR_CENTER_X + AVATAR_RADIUS_X * Math.cos(angleRad);
+                  const top = AVATAR_CENTER_Y + AVATAR_RADIUS_Y * Math.sin(angleRad);
+                  const position = {
+                    left: `${left}%`,
+                    top: `${top}%`,
+                  };
 
-                return (
-                  <button
-                    key={participant.id}
-                    type="button"
-                    className={`voting-avatar${isActive ? ' voting-avatar--active' : ''}${
-                      isFlying ? ' voting-avatar--fly' : ''
-                    }`}
-                    onClick={() => {
-                      if (isAnimatingVote) return;
-                      setSelectedIndex(index);
-                    }}
-                    style={position}
-                    disabled={isAnimatingVote}
-                  >
-                    <div className="voting-avatar-ring">
-                      <div className="voting-avatar-inner">
-                        <img
-                          src={participant.image}
-                          alt={participant.name}
-                          className="voting-avatar-image"
-                          width={100}
-                          height={100}
-                          loading="lazy"
-                          decoding="async"
-                        />
+                  return (
+                    <button
+                      key={participant.id}
+                      type="button"
+                      className={`voting-avatar${isActive ? ' voting-avatar--active' : ''}${
+                        isFlying ? ' voting-avatar--fly' : ''
+                      }`}
+                      onClick={() => {
+                        if (isAnimatingVote) return;
+                        setSelectedIndex(index);
+                      }}
+                      style={position}
+                      disabled={isAnimatingVote}
+                    >
+                      <div className="voting-avatar-ring">
+                        <div className="voting-avatar-inner">
+                          <img
+                            src={participant.image}
+                            alt={participant.name}
+                            className="voting-avatar-image"
+                            width={100}
+                            height={100}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -351,6 +380,20 @@ export const VotingScreen: React.FC = () => {
           </main>
 
           <div className="voting-cta-wrap">
+            {isPhotosStage && currentParticipant?.localId && (
+              <button
+                type="button"
+                className="voting-secondary-button"
+                onClick={() =>
+                  navigate(`/miss/${currentParticipant.localId}#gallery`, {
+                    state: { returnTo: '/voting' },
+                  })
+                }
+                disabled={isAnimatingVote}
+              >
+                Открыть фотосессию
+              </button>
+            )}
             <button
               type="button"
               className="voting-cta-button"
@@ -368,7 +411,7 @@ export const VotingScreen: React.FC = () => {
         <div className="voting-success">
           <h1 className="voting-success-title">Спасибо за голос!</h1>
           <p className="voting-success-subtitle">
-            Ваш выбор учтён.
+            Ваш выбор в обеих номинациях учтён.
           </p>
         </div>
       )}
