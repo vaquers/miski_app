@@ -23,21 +23,21 @@ export type VoteRequest = {
   };
 };
 
-export async function getParticipants(signal?: AbortSignal): Promise<ParticipantDto[]> {
-  return await requestJsonWithApiFallback<ParticipantDto[]>('/participants', { signal });
+export async function getParticipants(): Promise<ParticipantDto[]> {
+  return await requestJsonWithApiFallback<ParticipantDto[]>('/participants');
 }
 
-export async function hasVoted(tgId: number, signal?: AbortSignal): Promise<unknown> {
-  return await requestJsonWithApiFallback(`/has-voted/${tgId}`, { signal });
+export async function hasVoted(tgId: number): Promise<unknown> {
+  return await requestJsonWithApiFallback(`/has-voted/${tgId}`);
 }
 
 export async function vote(req: VoteRequest): Promise<unknown> {
+  // Бэкенд может ожидать другие имена полей; отправим совместимый payload.
   const payload = {
-    tg_id: req.tg_id,
+    ...req,
     tgId: req.tg_id,
-    participant_id: req.participant_id,
     participantId: req.participant_id,
-    nomination: req.nomination,
+    participant_id: req.participant_id,
     stage: req.nomination,
     category: req.nomination,
     voter: req.voter,
@@ -55,10 +55,11 @@ export async function vote(req: VoteRequest): Promise<unknown> {
   });
 }
 
-export async function getResults(signal?: AbortSignal): Promise<unknown> {
-  return await requestJsonWithApiFallback('/results', { signal });
+export async function getResults(): Promise<unknown> {
+  return await requestJsonWithApiFallback('/results');
 }
 
-export async function getVoters(signal?: AbortSignal): Promise<unknown> {
-  return await requestJsonWithApiFallback('/voters', { signal });
+export async function getVoters(): Promise<unknown> {
+  return await requestJsonWithApiFallback('/voters');
 }
+
